@@ -1,0 +1,242 @@
+Palmer Penguin and Geographic Isolation
+Data Owls: Hannah Joseph, Nina Hall, Sidra Droese, Sharaya Jordan, Hiro Das
+Abstract: In this study, we examine the 344 penguin data collection. The data collection includes 3 species. The three species in the data set were found on three islands in Antarctica's Palmer Archipelago. The Chinstrap and Gentoo species of penguins would be the two species that would be the focus. The two species' body masses, bill lengths, and the depth and length of their bills all differ. On Biscoe Island and Dream Island, the two species coexist frequently. Due to the geographic isolation of some species, we developed a hypothesis regarding whether or not this isolation has an impact on the morphological differences between the Chinstrap and Gentoo species. The Gentoo and Chinstrap species would be tested in addition to the null hypothesis that there is no environmental impact. We gathered information about the various species in order to perform an exploratory analysis of them. The acquired data was put through statistical analysis to determine the species' p-value. The effects on the environment did not significantly affect the outcomes for the various species. This demonstrates how our null hypothesis, according to which there was no environmental influence on the evolution of the species, was accepted
+
+# Import Numpy and Datascience modules.
+import numpy as np
+import pandas as pd
+from datascience import *
+
+# Plotting modules
+import matplotlib
+%matplotlib inline
+import matplotlib.pyplot as plt
+plt.style.use('fivethirtyeight')
+import warnings
+warnings.simplefilter('ignore', UserWarning)
+# Fix for datascience collections Iterable
+import collections as collections
+import collections.abc as abc
+collections.Iterable = abc.Iterable
+Palmer Penguins
+Welcome to the fascinating world of penguins, where flightless birds have evolved to become masters of the sea! In this dataset, we dive into the characteristics of different penguin species and how their adaptations have allowed them to thrive in their unique environments. See: https://allisonhorst.github.io/palmerpenguins/
+
+Lets examine the Palmer Penguins
+In our data set there are Various types of species of penguins including the Adelide, Chinstrap and Gentoo Penguins. These different species live across different Islands Including Dream, Biscoe and Torgesen. The Data shows differences in the Species, island, bill length(mm), flipper length(mm), body mass(g) and their sex.
+
+url = "https://raw.githubusercontent.com/mwaskom/seaborn-data/master/penguins.csv"
+penguin = Table.read_table(url)
+penguin
+species	island	bill_length_mm	bill_depth_mm	flipper_length_mm	body_mass_g	sex
+Adelie	Torgersen	39.1	18.7	181	3750	MALE
+Adelie	Torgersen	39.5	17.4	186	3800	FEMALE
+Adelie	Torgersen	40.3	18	195	3250	FEMALE
+Adelie	Torgersen	nan	nan	nan	nan	nan
+Adelie	Torgersen	36.7	19.3	193	3450	FEMALE
+Adelie	Torgersen	39.3	20.6	190	3650	MALE
+Adelie	Torgersen	38.9	17.8	181	3625	FEMALE
+Adelie	Torgersen	39.2	19.6	195	4675	MALE
+Adelie	Torgersen	34.1	18.1	193	3475	nan
+Adelie	Torgersen	42	20.2	190	4250	nan
+... (334 rows omitted)
+
+Research Question: Is there an environmental impact on the evolution within or between species?
+Gentoos are native to subantarctic islands, prolific hunters. Chinstrap Penguins islands in the South Atlantic, the Antarctic Peninsula, and New Zealand. Relatively small, only weighing about twelve pounds. Adelaide Penguins can swim nearly seven hundred and fifty miles away from their breeding site to hunt. On small islands all around the coast of Antarctica
+
+Exploratory Analysis
+If you're interested in exploring the different penguin groups and their characteristics, one great way to do this is by using the {group} method in Python. In particular, you can focus on the bill length in (mm) of the penguins, which is an important feature that distinguishes different penguin species. For example, you can compare the bill lengths of the Chinstrap and Gentoo penguins using a scatter plot to visualize any differences in the data.
+
+scatter= penguin.group(["bill_length_mm", "bill_depth_mm"]).drop("Adelie")
+scatter
+
+penguin.where("species", are.not_equal_to('Adelie')).scatter("bill_length_mm", "bill_depth_mm", group = 'species')
+
+Create a a table to explore the differences in amounts of penguins on the different islands
+
+penguin.pivot("species","island")
+island	Adelie	Chinstrap	Gentoo
+Biscoe	44	0	124
+Dream	56	68	0
+Torgersen	52	0	0
+body_mass = penguin.select('body_mass_g', 'species').where('body_mass_g',are.not_equal_to('nan'))
+body_mass
+body_mass_g	species
+3750	Adelie
+3800	Adelie
+3250	Adelie
+nan	Adelie
+3450	Adelie
+3650	Adelie
+3625	Adelie
+4675	Adelie
+3475	Adelie
+4250	Adelie
+... (334 rows omitted)
+
+body_mass.where('species', 'Chinstrap').hist('body_mass_g')
+
+body_mass.where('species', 'Gentoo').hist('body_mass_g')
+
+Comparing Penguins
+Now lets look specifically at the differences between Gentoo and Chinstrap penguins using [append] and [where] functions. First, create a table of only the selected penguins and then break those into two seperate tables.
+
+G_and_C= penguin.where(("species"), are.equal_to('Gentoo')).append(penguin.where(('species'), are.equal_to('Chinstrap')))
+G_and_C
+species	island	bill_length_mm	bill_depth_mm	flipper_length_mm	body_mass_g	sex
+Gentoo	Biscoe	46.1	13.2	211	4500	FEMALE
+Gentoo	Biscoe	50	16.3	230	5700	MALE
+Gentoo	Biscoe	48.7	14.1	210	4450	FEMALE
+Gentoo	Biscoe	50	15.2	218	5700	MALE
+Gentoo	Biscoe	47.6	14.5	215	5400	MALE
+Gentoo	Biscoe	46.5	13.5	210	4550	FEMALE
+Gentoo	Biscoe	45.4	14.6	211	4800	FEMALE
+Gentoo	Biscoe	46.7	15.3	219	5200	MALE
+Gentoo	Biscoe	43.3	13.4	209	4400	FEMALE
+Gentoo	Biscoe	46.8	15.4	215	5150	MALE
+... (182 rows omitted)
+
+Gentoo= penguin.where(("species"), are.equal_to('Gentoo'))
+Gentoo
+species	island	bill_length_mm	bill_depth_mm	flipper_length_mm	body_mass_g	sex
+Gentoo	Biscoe	46.1	13.2	211	4500	FEMALE
+Gentoo	Biscoe	50	16.3	230	5700	MALE
+Gentoo	Biscoe	48.7	14.1	210	4450	FEMALE
+Gentoo	Biscoe	50	15.2	218	5700	MALE
+Gentoo	Biscoe	47.6	14.5	215	5400	MALE
+Gentoo	Biscoe	46.5	13.5	210	4550	FEMALE
+Gentoo	Biscoe	45.4	14.6	211	4800	FEMALE
+Gentoo	Biscoe	46.7	15.3	219	5200	MALE
+Gentoo	Biscoe	43.3	13.4	209	4400	FEMALE
+Gentoo	Biscoe	46.8	15.4	215	5150	MALE
+... (114 rows omitted)
+
+Chinstrap= penguin.where(("species"), are.equal_to('Chinstrap'))
+Chinstrap
+species	island	bill_length_mm	bill_depth_mm	flipper_length_mm	body_mass_g	sex
+Chinstrap	Dream	46.5	17.9	192	3500	FEMALE
+Chinstrap	Dream	50	19.5	196	3900	MALE
+Chinstrap	Dream	51.3	19.2	193	3650	MALE
+Chinstrap	Dream	45.4	18.7	188	3525	FEMALE
+Chinstrap	Dream	52.7	19.8	197	3725	MALE
+Chinstrap	Dream	45.2	17.8	198	3950	FEMALE
+Chinstrap	Dream	46.1	18.2	178	3250	FEMALE
+Chinstrap	Dream	51.3	18.2	197	3750	MALE
+Chinstrap	Dream	46	18.9	195	4150	FEMALE
+Chinstrap	Dream	51.3	19.9	198	3700	MALE
+... (58 rows omitted)
+
+chinstrap_flipper = G_and_C.where('species', 'Chinstrap').hist('flipper_length_mm')
+chinstrap_flipper 
+
+gentoo_flipper = G_and_C.where('species', 'Gentoo').hist('flipper_length_mm')
+
+Part 2
+Now using the data science plan examine the different traits and the relationship between the two species of penguin.
+
+Data Science Plan
+Formulate hypothesis:
+
+-Alternative: There is an environmental impact on evolution between Chinstrap and Gentoo species.
+
+-Null: There is no environmental impact on the evolution between Chinstrap and Gentoo species.
+
+Gather Data
+
+Simulate Random Changes
+
+Test statistic
+
+P-value:
+
+Greater than 5% = null hypothesis is accepted
+Less than 5% = null hypothesis is rejected
+def diff_n(values, n):
+    return np.array(values)[n:] - np.array(values)[:-n]
+def changes(G_and_C, years = 1):
+    "Return the number of increases minus the number of decreases after one year."
+    differences = diff_n(G_and_C, years)
+    increase = np.count_nonzero(differences > 0)
+    decrease = np.count_nonzero(differences < 0)
+    return increase - decrease
+def simulate_under_null(num_chances_to_change):
+    uniform = Table().with_columns(
+        "Change", make_array('Increase', 'Decrease'),
+        "Chance", make_array(0.5,        0.5))
+    sample = uniform.sample_from_distribution('Chance', num_chances_to_change)     
+    increases = sample.column("Chance sample").item(0) 
+    decreases = sample.column("Chance sample").item(1)  
+    return increases - decreases 
+def empirical_distribution(tbl,iterations):
+    num_changes = tbl.num_rows 
+    samples = make_array()
+    for i in np.arange(iterations):
+        samples = np.append(samples, simulate_under_null(num_changes)) 
+    Table().with_column('Test statistic under null', samples).hist(bins=np.arange(min(samples), max(samples) + max(samples) , 2))
+    return samples
+gentoo_samples = empirical_distribution(Gentoo, 1000)
+
+chinstrap_samples = empirical_distribution(Chinstrap, 1000)
+
+Create test statistic in order to find the total increase minus total decrease across both penguin species.
+gentoo_test_stat = changes(Gentoo.column('bill_length_mm'))
+gentoo_test_stat
+print('Total increases minus total decreases across Bill Length (mm) of Gentoo species', gentoo_test_stat)
+Total increases minus total decreases across Bill Length (mm) of Gentoo species -2
+chinstrap_test_stat = changes(Chinstrap.column('bill_length_mm'))
+chinstrap_test_stat
+print('Total increases minus total decreases across Bill Length (mm) of Chinstrap species', chinstrap_test_stat)
+Total increases minus total decreases across Bill Length (mm) of Chinstrap species -3
+Using the information above find the p-vale in order to reject or support the null hypothesis.
+p_value = np.count_nonzero(gentoo_samples > gentoo_test_stat) / len(gentoo_samples)
+p_value
+print('P-value of Bill Length of Gentoo:', p_value)
+print('Null hypothesis cannot be rejected.')
+P-value of Bill Length of Gentoo: 0.542
+Null hypothesis cannot be rejected.
+p_value = np.count_nonzero(chinstrap_samples > chinstrap_test_stat) / len(chinstrap_samples)
+p_value
+print('P-value of Bill Length of Chinstrap:', p_value)
+print('Null hypothesis cannot be rejected.')
+P-value of Bill Length of Chinstrap: 0.634
+Null hypothesis cannot be rejected.
+train, test = G_and_C.split(int(G_and_C.num_rows*0.8))
+print(train.num_rows, 'training and', test.num_rows, 'test instances.')
+
+def distance(point1, point2):
+    """Returns the Euclidean distance between point1 and point2.
+    
+    Each argument is an array containing the coordinates of a point."""
+    return np.sqrt(np.sum((point1 - point2)**2))
+
+def row_distance(row1, row2):
+    """The distance between two rows of a table."""
+    return distance(np.array(row1), np.array(row2))
+
+def distances(training, example, output):
+    """Compute the distance from example for each row in training."""
+    dists = []
+    attributes = training.drop(output, "island", "sex", "species")
+    for row in attributes.rows:
+        dists.append(row_distance(row, example))
+    return training.with_column('Distance', dists)
+
+def closest(training, example, k, output):
+    """Return a table of the k closest neighbors to example."""
+    return distances(training, example, output).sort('Distance').take(np.arange(k))
+153 training and 39 test instances.
+k = 20
+for i, row in enumerate(test.drop("island","sex","species").rows):
+    cl_knn = closest(train.drop("island","sex","species"), row, k, output="bill_length_mm")
+    print(i, "Prediction:", np.bincount(cl_knn.column("bill_length_mm").astype(int)).argmax(), "Actual:", test.column("bill_length_mm").take(i))
+    correct += (np.bincount(cl_knn.column("bill_length_mm")).argmax()==test.column("bill_length_mm").take(i))
+print("% Correct: ",correct/(i+1)*100)
+References
+Boxley, P. (2005). Gentoo_Penguin [Photograph]. https://www.flickr.com/photos/paulboxley/65217341/
+
+Lindie, R. Chinstrap Penguin (Pygoscelis antarctica) [Photograph]. Encyclopaedia Britannica. https://www.britannica.com/animal/chinstrap-penguin#/media/1/1655480/164030
+
+Horst AM, Hill AP, Gorman KB (2020). palmerpenguins: Palmer
+
+Archipelago (Antarctica) penguin data. R package version 0.1.0. https://allisonhorst.github.io/palmerpenguins/. doi: 10.5281/zenodo.3960218.
+
+ 
