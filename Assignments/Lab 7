@@ -1,0 +1,416 @@
+Lab 7: Inference and Global Climate Change
+By the end of this lab, you should know how to:
+
+Test whether observed data appears to be a random sample from a distribution.
+Analyze a natural experiment.
+Implement and interpret a sign test.
+Create a function to run a general hypothesis test.
+Analyze visualizations and draw conclusions from them.
+name = "Hannah"
+name
+'Hannah'
+## import statements
+# These lines load the tests. 
+from gofer.ok import check
+
+import numpy as np
+from datascience import *
+import pandas as pd
+import matplotlib
+%matplotlib inline
+import matplotlib.pyplot as plt
+plt.style.use('fivethirtyeight')
+# Fix for datascience plots
+import collections as collections
+import collections.abc as abc
+collections.Iterable = abc.Iterable
+Overview
+Climate change is usually referring to the general trend of warming temperatures globally. Along with these increasing temperatures, unusual shifts in trends in weather activity such as hurricanes, storms, winds, etc are also usually classified under climate change. While the climate can shift due to natural occurrences, scientists have found that human interventions have potentially caused the trend of warming. One explanation for the warming could be increased solar solar activity, however scientists have found that solar activity has not generally increased during the period when temperature has increased.
+
+
+Links: NASA Canada
+
+Data
+While there's several different metrics we could analyze to make some inferences about overall trends in global climate change, for simplicity's sake we will be focusing on land temperature across different countries. The original table came from this database, however it's been reformatted to make the downstream analyses easier. There are 15 columns: Year, Country, Average Temperature of that country in that year 'avg', and then a column for each month of that year with temperatures.
+
+temps = Table.read_table('temp_per_country.csv')
+temps
+year	country	avg	jan	feb	mar	apr	may	jun	jul	aug	sep	oct	nov	dec
+1753	Åland	5.11833	-2.412	-3.273	0.71	2.778	6.226	11.102	15.159	15.786	12.106	8.756	2.248	-7.766
+1753	Albania	12.557	1.4	2.655	8.505	11.541	16.642	22.098	23.532	21.77	18.7	13.661	7.593	2.587
+1753	Andorra	11.2345	0.938	4.083	8.352	9.165	13.783	19.796	21.148	18.796	16.546	11.706	5.991	4.51
+1753	Austria	6.13892	-6.398	-3.537	2.681	6.498	11.331	16.209	16.881	14.751	12.34	7.072	-0.011	-4.15
+1753	Belarus	5.65175	-7.122	-6.956	0.706	6.768	13.06	16.615	18.032	16.501	12.448	6.84	0.024	-9.095
+1753	Belgium	9.45708	-1.215	2.443	6.838	8.826	13.042	17.602	18.072	16.203	14.761	10.332	4.143	2.438
+1753	Bosnia And Herzegovina	10.3656	-1.973	0.043	6.558	10.293	15.253	20.463	21.589	19.567	16.607	11.343	4.776	-0.132
+1753	Bulgaria	10.3995	-1.841	-0.883	5.889	10.043	15.723	20.69	22.084	20.446	17.03	11.668	5.201	-1.256
+1753	Croatia	11.2875	-1.311	1.012	7.5	11.318	16.33	21.666	22.721	20.52	17.527	12.113	5.342	0.712
+1753	Czech Republic	7.49492	-4.72	-2.339	3.956	8.117	12.84	17.184	18.175	16.392	13.701	8.464	1.475	-3.306
+... (44320 rows omitted)
+
+Question 1: Let's explore this data a bit. The cell below creates a pivot table with years as the rows and each country as a new column. Select two countries from our dataset and draw a line plot of the changes in temperature over time. You only want to graph the years that have data for both your countries of interest (Hint: You may want to utilize where and are.above() to select those years with data). There is not a autocheck for this question as you all may have different answers depending on the countres you pick.
+
+np.unique(temps['country'])
+array(['Afghanistan', 'Africa', 'Albania', 'Algeria', 'American Samoa',
+       'Andorra', 'Angola', 'Anguilla', 'Antigua And Barbuda', 'Argentina',
+       'Armenia', 'Aruba', 'Asia', 'Australia', 'Austria', 'Azerbaijan',
+       'Bahamas', 'Bahrain', 'Baker Island', 'Bangladesh', 'Barbados',
+       'Belarus', 'Belgium', 'Belize', 'Benin', 'Bhutan', 'Bolivia',
+       'Bonaire, Saint Eustatius And Saba', 'Bosnia And Herzegovina',
+       'Botswana', 'Brazil', 'British Virgin Islands', 'Bulgaria',
+       'Burkina Faso', 'Burma', 'Burundi', 'Cambodia', 'Cameroon',
+       'Canada', 'Cape Verde', 'Cayman Islands',
+       'Central African Republic', 'Chad', 'Chile', 'China',
+       'Christmas Island', 'Colombia', 'Comoros', 'Congo',
+       'Congo (Democratic Republic Of The)', 'Costa Rica', 'Croatia',
+       'Cuba', 'Curaçao', 'Cyprus', 'Czech Republic', "Côte D'Ivoire",
+       'Denmark', 'Denmark (Europe)', 'Djibouti', 'Dominica',
+       'Dominican Republic', 'Ecuador', 'Egypt', 'El Salvador',
+       'Equatorial Guinea', 'Eritrea', 'Estonia', 'Ethiopia', 'Europe',
+       'Falkland Islands (Islas Malvinas)', 'Faroe Islands',
+       'Federated States Of Micronesia', 'Fiji', 'Finland', 'France',
+       'France (Europe)', 'French Guiana', 'French Polynesia',
+       'French Southern And Antarctic Lands', 'Gabon', 'Gambia',
+       'Gaza Strip', 'Georgia', 'Germany', 'Ghana', 'Greece', 'Greenland',
+       'Grenada', 'Guadeloupe', 'Guam', 'Guatemala', 'Guernsey', 'Guinea',
+       'Guinea Bissau', 'Guyana', 'Haiti',
+       'Heard Island And Mcdonald Islands', 'Honduras', 'Hong Kong',
+       'Hungary', 'Iceland', 'India', 'Indonesia', 'Iran', 'Iraq',
+       'Ireland', 'Isle Of Man', 'Israel', 'Italy', 'Jamaica', 'Japan',
+       'Jersey', 'Jordan', 'Kazakhstan', 'Kenya', 'Kingman Reef',
+       'Kiribati', 'Kuwait', 'Kyrgyzstan', 'Laos', 'Latvia', 'Lebanon',
+       'Lesotho', 'Liberia', 'Libya', 'Liechtenstein', 'Lithuania',
+       'Luxembourg', 'Macau', 'Macedonia', 'Madagascar', 'Malawi',
+       'Malaysia', 'Mali', 'Malta', 'Martinique', 'Mauritania',
+       'Mauritius', 'Mayotte', 'Mexico', 'Moldova', 'Monaco', 'Mongolia',
+       'Montenegro', 'Montserrat', 'Morocco', 'Mozambique', 'Namibia',
+       'Nepal', 'Netherlands', 'Netherlands (Europe)', 'New Caledonia',
+       'New Zealand', 'Nicaragua', 'Niger', 'Nigeria', 'Niue',
+       'North America', 'North Korea', 'Northern Mariana Islands',
+       'Norway', 'Oceania', 'Oman', 'Pakistan', 'Palau', 'Palestina',
+       'Palmyra Atoll', 'Panama', 'Papua New Guinea', 'Paraguay', 'Peru',
+       'Philippines', 'Poland', 'Portugal', 'Puerto Rico', 'Qatar',
+       'Reunion', 'Romania', 'Russia', 'Rwanda', 'Saint Barthélemy',
+       'Saint Kitts And Nevis', 'Saint Lucia', 'Saint Martin',
+       'Saint Pierre And Miquelon', 'Saint Vincent And The Grenadines',
+       'Samoa', 'San Marino', 'Sao Tome And Principe', 'Saudi Arabia',
+       'Senegal', 'Serbia', 'Seychelles', 'Sierra Leone', 'Singapore',
+       'Sint Maarten', 'Slovakia', 'Slovenia', 'Solomon Islands',
+       'Somalia', 'South Africa', 'South America',
+       'South Georgia And The South Sandwich Isla', 'South Korea', 'Spain',
+       'Sri Lanka', 'Sudan', 'Suriname', 'Svalbard And Jan Mayen',
+       'Swaziland', 'Sweden', 'Switzerland', 'Syria', 'Taiwan',
+       'Tajikistan', 'Tanzania', 'Thailand', 'Timor Leste', 'Togo',
+       'Tonga', 'Trinidad And Tobago', 'Tunisia', 'Turkey', 'Turkmenistan',
+       'Turks And Caicas Islands', 'Uganda', 'Ukraine',
+       'United Arab Emirates', 'United Kingdom', 'United Kingdom (Europe)',
+       'United States', 'Uruguay', 'Uzbekistan', 'Venezuela', 'Vietnam',
+       'Virgin Islands', 'Western Sahara', 'Yemen', 'Zambia', 'Zimbabwe',
+       'Åland'],
+      dtype='<U41')
+pivotTable = temps.select('year', 'country', 'avg').pivot('country', 'year', 'avg', sum)
+pivotTable
+year	Afghanistan	Africa	Albania	Algeria	American Samoa	Andorra	Angola	Anguilla	Antigua And Barbuda	Argentina	Armenia	Aruba	Asia	Australia	Austria	Azerbaijan	Bahamas	Bahrain	Baker Island	Bangladesh	Barbados	Belarus	Belgium	Belize	Benin	Bhutan	Bolivia	Bonaire, Saint Eustatius And Saba	Bosnia And Herzegovina	Botswana	Brazil	British Virgin Islands	Bulgaria	Burkina Faso	Burma	Burundi	Cambodia	Cameroon	Canada	Cape Verde	Cayman Islands	Central African Republic	Chad	Chile	China	Christmas Island	Colombia	Comoros	Congo	Congo (Democratic Republic Of The)	Costa Rica	Croatia	Cuba	Curaçao	Cyprus	Czech Republic	Côte D'Ivoire	Denmark	Denmark (Europe)	Djibouti	Dominica	Dominican Republic	Ecuador	Egypt	El Salvador	Equatorial Guinea	Eritrea	Estonia	Ethiopia	Europe	Falkland Islands (Islas Malvinas)	Faroe Islands	Federated States Of Micronesia	Fiji	Finland	France	France (Europe)	French Guiana	French Polynesia	French Southern And Antarctic Lands	Gabon	Gambia	Gaza Strip	Georgia	Germany	Ghana	Greece	Greenland	Grenada	Guadeloupe	Guam	Guatemala	Guernsey	Guinea	Guinea Bissau	Guyana	Haiti	Heard Island And Mcdonald Islands	Honduras	Hong Kong	Hungary	Iceland	India	Indonesia	Iran	Iraq	Ireland	Isle Of Man	Israel	Italy	Jamaica	Japan	Jersey	Jordan	Kazakhstan	Kenya	Kingman Reef	Kiribati	Kuwait	Kyrgyzstan	Laos	Latvia	Lebanon	Lesotho	Liberia	Libya	Liechtenstein	Lithuania	Luxembourg	Macau	Macedonia	Madagascar	Malawi	Malaysia	Mali	Malta	Martinique	Mauritania	Mauritius	Mayotte	Mexico	Moldova	Monaco	Mongolia	Montenegro	Montserrat	Morocco	Mozambique	Namibia	Nepal	Netherlands	Netherlands (Europe)	New Caledonia	New Zealand	Nicaragua	Niger	Nigeria	Niue	North America	North Korea	Northern Mariana Islands	Norway	Oceania	Oman	Pakistan	Palau	Palestina	Palmyra Atoll	Panama	Papua New Guinea	Paraguay	Peru	Philippines	Poland	Portugal	Puerto Rico	Qatar	Reunion	Romania	Russia	Rwanda	Saint Barthélemy	Saint Kitts And Nevis	Saint Lucia	Saint Martin	Saint Pierre And Miquelon	Saint Vincent And The Grenadines	Samoa	San Marino	Sao Tome And Principe	Saudi Arabia	Senegal	Serbia	Seychelles	Sierra Leone	Singapore	Sint Maarten	Slovakia	Slovenia	Solomon Islands	Somalia	South Africa	South America	South Georgia And The South Sandwich Isla	South Korea	Spain	Sri Lanka	Sudan	Suriname	Svalbard And Jan Mayen	Swaziland	Sweden	Switzerland	Syria	Taiwan	Tajikistan	Tanzania	Thailand	Timor Leste	Togo	Tonga	Trinidad And Tobago	Tunisia	Turkey	Turkmenistan	Turks And Caicas Islands	Uganda	Ukraine	United Arab Emirates	United Kingdom	United Kingdom (Europe)	United States	Uruguay	Uzbekistan	Venezuela	Vietnam	Virgin Islands	Western Sahara	Yemen	Zambia	Zimbabwe	Åland
+1753	0	0	12.557	0	0	11.2345	0	0	0	0	0	0	0	0	6.13892	0	0	0	0	0	0	5.65175	9.45708	0	0	0	0	0	10.3656	0	0	0	10.3995	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	11.2875	0	0	0	7.49492	0	0	7.568	0	0	0	0	0	0	0	0	4.6585	0	7.73625	0	6.49958	0	0	1.12117	12.7718	10.43	0	0	0	0	0	0	0	8.02917	0	14.7132	0	0	0	0	0	10.926	0	0	0	0	0	0	0	9.61875	1.3155	0	0	0	0	9.36908	9.30625	0	12.7374	0	0	10.926	0	0	0	0	0	0	0	0	5.13533	0	0	0	0	4.6125	5.70917	9.13775	0	10.3112	0	0	0	0	18.4743	0	0	0	0	0	8.81283	9.06558	0	10.1555	0	0	0	0	0	9.44008	9.04825	0	0	0	0	0	0	0	0	0	-0.0538333	0	0	0	0	0	0	0	0	0	0	0	7.26283	14.6823	0	0	0	8.65533	0	0	0	0	0	0	4.21583	0	0	13.8162	0	0	0	9.91017	0	0	0	0	7.39567	9.61117	0	0	0	0	0	0	13.6281	0	0	0	0	0	2.19492	6.995	0	0	0	0	0	0	0	0	0	19.9612	0	0	0	0	7.52508	0	8.42608	8.59308	0	0	0	0	0	0	0	0	0	0	5.11833
+1754	0	0	12.5482	0	0	11.1162	0	0	0	0	0	0	0	0	5.90733	0	0	0	0	0	0	5.69292	9.13792	0	0	0	0	0	10.2522	0	0	0	10.4567	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	11.1303	0	0	0	7.28542	0	0	7.43308	0	0	0	0	0	0	0	0	4.65392	0	7.70733	0	6.62175	0	0	1.24392	12.6662	10.2356	0	0	0	0	0	0	0	7.75983	0	14.7948	0	0	0	0	0	10.7816	0	0	0	0	0	0	0	9.50142	1.55792	0	0	0	0	9.35642	9.209	0	12.5633	0	0	10.7816	0	0	0	0	0	0	0	0	5.12342	0	0	0	0	4.32667	5.67717	8.82758	0	10.3217	0	0	0	0	18.5128	0	0	0	0	0	8.88767	8.81275	0	10.1079	0	0	0	0	0	9.11183	8.70592	0	0	0	0	0	0	0	0	0	0.0841667	0	0	0	0	0	0	0	0	0	0	0	7.148	14.7879	0	0	0	8.66983	0	0	0	0	0	0	0	0	0	13.6092	0	0	0	9.86275	0	0	0	0	7.26917	9.40675	0	0	0	0	0	0	13.6551	0	0	0	0	0	2.27433	6.7115	0	0	0	0	0	0	0	0	0	20.0383	0	0	0	0	7.63525	0	8.33883	8.47867	0	0	0	0	0	0	0	0	0	0	5.11808
+1755	0	0	12.3226	0	0	10.8067	0	0	0	0	0	0	0	0	5.67192	0	0	0	0	0	0	5.58017	8.88558	0	0	0	0	0	10.0379	0	0	0	10.2442	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	10.9145	0	0	0	7.06283	0	0	7.22233	0	0	0	0	0	0	0	0	4.55375	0	7.45892	0	6.26767	0	0	1.03325	12.3435	9.91075	0	0	0	0	0	0	0	7.52	0	14.5553	0	0	0	0	0	10.4727	0	0	0	0	0	0	0	9.299	1.20225	0	0	0	0	9.04967	8.92458	0	12.3298	0	0	10.4727	0	0	0	0	0	0	0	0	5.00367	0	0	0	0	4.05333	5.54075	8.54558	0	10.0994	0	0	0	0	18.2548	0	0	0	0	0	8.71358	8.5545	0	9.89008	0	0	0	0	0	8.92475	8.52167	0	0	0	0	0	0	0	0	0	-0.271917	0	0	0	0	0	0	0	0	0	0	0	6.96633	14.4789	0	0	0	8.47808	0	0	0	0	0	0	0	0	0	13.392	0	0	0	9.65225	0	0	0	0	7.07242	9.1855	0	0	0	0	0	0	13.3447	0	0	0	0	0	1.9205	6.3995	0	0	0	0	0	0	0	0	0	19.7646	0	0	0	0	7.47825	0	8.05483	8.19658	0	0	0	0	0	0	0	0	0	0	4.73283
+1756	0	0	13.0259	0	0	11.0978	0	0	0	0	0	0	0	0	6.46358	0	0	0	0	0	0	6.29742	9.398	0	0	0	0	0	10.77	0	0	0	11.0122	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	11.6509	0	0	0	8.07967	0	0	8.00267	0	0	0	0	0	0	0	0	5.03808	0	8.06125	0	6.77783	0	0	1.42458	12.711	10.2272	0	0	0	0	0	0	0	8.40875	0	15.2567	0	0	0	0	0	10.8317	0	0	0	0	0	0	0	10.1645	1.73833	0	0	0	0	9.50142	9.39425	0	12.8488	0	0	10.8317	0	0	0	0	0	0	0	0	5.59683	0	0	0	0	4.63825	6.26308	9.05292	0	10.8294	0	0	0	0	18.7946	0	0	0	0	0	9.51142	8.863	0	10.6161	0	0	0	0	0	9.56867	9.16658	0	0	0	0	0	0	0	0	0	0.19475	0	0	0	0	0	0	0	0	0	0	0	7.97642	14.8343	0	0	0	9.29583	0	0	0	0	0	0	0	0	0	13.9949	0	0	0	10.4285	0	0	0	0	8.01267	9.90658	0	0	0	0	0	0	13.6757	0	0	0	0	0	2.393	6.78933	0	0	0	0	0	0	0	0	0	20.2291	0	0	0	0	8.2355	0	8.53608	8.66958	0	0	0	0	0	0	0	0	0	0	5.1605
+1757	0	0	12.7303	0	0	10.8682	0	0	0	0	0	0	0	0	6.09717	0	0	0	0	0	0	6.30167	9.22142	0	0	0	0	0	10.4391	0	0	0	10.7598	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	11.3068	0	0	0	7.69675	0	0	8.038	0	0	0	0	0	0	0	0	5.27133	0	7.95733	0	6.86583	0	0	1.70183	12.5216	10.0156	0	0	0	0	0	0	0	8.10858	0	14.9987	0	0	0	0	0	10.7017	0	0	0	0	0	0	0	9.84108	1.77383	0	0	0	0	9.46283	9.36492	0	12.5326	0	0	10.7017	0	0	0	0	0	0	0	0	5.74133	0	0	0	0	4.29592	6.30183	8.84275	0	10.5432	0	0	0	0	18.5369	0	0	0	0	0	9.33492	8.57608	0	10.3067	0	0	0	0	0	9.43625	9.03267	0	0	0	0	0	0	0	0	0	0.38025	0	0	0	0	0	0	0	0	0	0	0	7.746	14.7103	0	0	0	9.05058	0	0	0	0	0	0	0	0	0	13.6488	0	0	0	10.1244	0	0	0	0	7.69475	9.54933	0	0	0	0	0	0	13.5117	0	0	0	0	0	2.62817	6.48158	0	0	0	0	0	0	0	0	0	20.0174	0	0	0	0	8.129	0	8.50158	8.63833	0	0	0	0	0	0	0	0	0	0	5.41383
+1758	0	0	11.4443	0	0	10.1447	0	0	0	0	0	0	0	0	5.36342	0	0	0	0	0	0	4.34367	8.91433	0	0	0	0	0	9.39533	0	0	0	9.19908	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	10.3803	0	0	0	6.79842	0	0	7.11558	0	0	0	0	0	0	0	0	3.23958	0	6.69083	0	5.58392	0	0	-0.338083	11.7373	9.486	0	0	0	0	0	0	0	7.49608	0	13.4913	0	0	0	0	0	10.0683	0	0	0	0	0	0	0	8.68817	0.150667	0	0	0	0	8.50692	8.60758	0	11.7922	0	0	10.0683	0	0	0	0	0	0	0	0	3.84408	0	0	0	0	3.82775	4.55067	8.512	0	9.176	0	0	0	0	17.2762	0	0	0	0	0	7.55133	8.151	0	9.09675	0	0	0	0	0	9.08392	8.71683	0	0	0	0	0	0	0	0	0	-1.1045	0	0	0	0	0	0	0	0	0	0	0	6.42908	13.3563	0	0	0	7.50683	0	0	0	0	0	0	2.85958	0	0	12.9401	0	0	0	8.85742	0	0	0	0	6.5085	8.76642	0	0	0	0	0	0	12.3889	0	0	0	0	0	1.20475	6.09708	0	0	0	0	0	0	0	0	0	18.6853	0	0	0	0	6.181	0	7.69817	7.915	0	0	0	0	0	0	0	0	0	0	4.07483
+1759	0	0	12.4929	0	0	11.2997	0	0	0	0	0	0	0	0	6.36383	0	24.5444	0	0	0	0	5.53625	9.86375	0	0	0	0	0	10.438	0	0	0	10.2404	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	11.4184	0	0	0	7.721	0	0	8.20992	0	0	0	0	0	0	0	0	4.6355	0	7.79833	0	6.6355	0	0	1.0075	12.8395	10.6013	0	0	0	0	0	0	0	8.41275	0	14.5348	0	0	0	0	0	11.1004	0	0	0	0	0	0	0	9.70275	1.19025	0	0	0	0	9.49833	9.58308	0	12.8982	0	0	11.1004	0	0	0	0	0	0	0	0	5.17183	0	0	0	0	4.88883	5.80017	9.49992	0	10.2196	0	0	0	0	18.3628	0	0	0	0	0	8.62158	9.33225	0	10.1411	0	0	0	0	0	9.95958	9.58908	0	0	0	0	0	0	0	0	0	0.0870833	0	0	0	0	0	0	0	0	0	0	0	7.46658	14.4526	0	0	0	8.55258	0	0	0	0	0	0	3.74417	0	0	14.0188	0	0	0	9.89367	0	0	0	0	7.509	9.80275	0	0	0	0	0	0	13.504	0	0	0	0	0	2.47167	7.24742	0	0	0	0	0	0	0	0	0	19.7935	0	0	0	0	7.28083	0	8.68208	8.89517	0	0	0	0	0	0	0	0	0	0	5.45208
+1760	0	0	12.155	0	0	11.0824	0	0	0	0	0	0	0	0	6.3795	0	0	0	0	0	0	4.7515	9.65242	0	0	0	0	0	10.2336	0	0	0	9.8045	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	11.2765	0	0	0	7.6905	0	0	7.6605	0	0	0	0	0	0	0	0	3.45058	0	7.26342	0	5.72208	0	0	-0.2865	12.5932	10.4712	0	0	0	0	0	0	0	8.38017	0	14.0864	0	0	0	0	0	10.7183	0	0	0	0	0	0	0	9.49708	0.26025	0	0	0	0	8.82892	8.92567	0	12.7324	0	0	10.7183	0	0	0	0	0	0	0	0	4.17367	0	0	0	0	5.0215	4.9965	9.43883	0	9.86008	0	0	0	0	17.9443	0	0	0	0	0	8.07333	9.22408	0	9.85308	0	0	0	0	0	9.514	9.151	0	0	0	0	0	0	0	0	0	-0.92975	0	0	0	0	0	0	0	0	0	0	0	7.11367	13.899	0	0	0	8.13692	0	0	0	0	0	0	0	0	0	13.9027	0	0	0	9.60242	0	0	0	0	7.29767	9.73508	0	0	0	0	0	0	13.0712	0	0	0	0	0	1.43642	7.37467	0	0	0	0	0	0	0	0	0	19.3044	0	0	0	0	6.61817	0	8.03317	8.25558	0	0	0	0	0	0	0	0	0	0	4.322
+1761	0	0	12.8763	0	0	11.3019	0	0	0	0	0	0	0	0	6.57258	0	0	0	0	0	0	6.10167	9.72242	0	0	0	0	0	10.7214	0	0	0	10.7556	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	11.6573	0	0	0	8.07392	0	0	8.42625	0	0	0	0	0	0	0	0	5.096	0	8.13567	0	7.05567	0	0	1.57208	12.9132	10.5396	0	0	0	0	0	0	0	8.59617	0	15.0247	0	0	0	0	0	11.0681	0	0	0	0	0	0	0	10.0753	1.77792	0	0	0	0	9.65783	9.636	0	12.9722	0	0	11.0681	0	0	0	0	0	0	0	0	5.6375	0	0	0	0	4.93542	6.27317	9.41433	0	10.6452	0	0	0	0	18.6926	0	0	0	0	0	9.20792	9.18108	0	10.4947	0	0	0	0	0	9.81458	9.42492	0	0	0	0	0	0	0	0	0	0.59025	0	0	0	0	0	0	0	0	0	0	0	7.91933	14.7587	0	0	0	9.06067	0	0	0	0	0	0	0	0	0	14.1082	0	0	0	10.2856	0	0	0	0	7.91633	9.98308	0	0	0	0	0	0	13.6989	0	0	0	-7.16825	0	2.915	7.18292	0	0	0	0	0	0	0	0	0	20.1348	0	0	0	0	7.90708	0	8.76383	8.934	0	0	0	0	0	0	0	0	0	0	5.77158
+1762	0	0	12.7003	0	0	11.1437	0	0	0	0	0	0	0	0	6.08058	0	0	0	0	0	0	5.80308	9.06533	0	0	0	0	0	10.4418	0	0	0	10.5868	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	11.3248	0	0	0	7.42525	0	0	7.30817	0	0	0	0	0	0	0	0	4.75467	0	7.70108	0	6.23017	0	0	1.13483	12.623	10.205	0	0	0	0	0	0	0	7.80592	0	14.8985	0	0	0	0	0	10.6265	0	0	0	0	0	0	0	9.67567	1.21142	0	0	0	0	9.09283	8.9445	0	12.7426	0	0	10.6265	0	0	0	0	0	0	0	0	5.23783	0	0	0	0	4.48533	5.80017	8.80083	0	10.4685	0	0	0	0	18.6098	0	0	0	0	0	9.011	8.95883	0	10.2777	0	0	0	0	0	8.99083	8.58458	0	0	0	0	0	0	0	0	0	-0.234083	0	0	0	0	0	0	0	0	0	0	0	7.26325	14.7021	0	0	0	8.81567	0	0	0	0	0	0	0	0	0	13.8185	0	0	0	10.0309	0	0	0	0	7.431	9.60558	0	0	0	0	0	0	13.6088	0	0	0	-7.462	0	2.07817	6.82408	0	0	0	0	0	0	0	0	0	20.0852	0	0	0	0	7.73417	0	8.0915	8.22192	0	0	0	0	0	0	0	0	0	0	5.217
+... (250 rows omitted)
+
+yourCountries = pivotTable.select(['year','Albania','Andorra']).where('Albania',are.above(0)).where('Andorra',are.above(0))
+yourCountries.show(5)
+year	Albania	Andorra
+1753	12.557	11.2345
+1754	12.5482	11.1162
+1755	12.3226	10.8067
+1756	13.0259	11.0978
+1757	12.7303	10.8682
+... (255 rows omitted)
+
+yourCountries.plot('year')
+
+Question 1 continued: In this markdown cell, explain an observation you see from the figure you generated.
+
+From this graph, Albania had higher temperature averages than Andorra. Additionally, around Year 2000, the averages started to increase to above 14.
+
+Question 2: Let's visualize the change in temperature for the United States.
+
+us = pivotTable.where('United States', are.above(0))
+
+plt.figure(figsize = (10, 5))
+plt.plot(us['year'].astype(int), us['United States'])
+plt.xticks(np.arange(1750, 2025, 25))
+plt.show()
+
+check('tests/q2.py')
+All tests passed!
+
+Question 3: Null and alternative hypothesis. We may be curious whether globally temperatures are more likely to increase or decrease on average. Based on our preliminary figures and what we know about creating good hypotheses, set the null and alternative hypothesis below:
+
+Null hypothesis: Globally, temperatures are equally likely to increase or decrease on average in each time period.
+
+Alternative hypothesis: Globally, temperatures are more likely to increase on average in each time period.
+
+To test the null hypothesis we're interested in identifying whether the temperature increased or decreased in each time period.
+Temperatures vary widely across countries and years, presumably due to the vast array of differences among the climates and human intervention. Rather than attempting to analyze the temperatures themselves, here we will restrict our analysis to whether or not temperatures increased or decreased over certain time spans. We will not concern ourselves with how much temperatures increased or decreased; only the direction of the changes - whether they increased or decreased.
+
+The np.diff function takes an array of values and computes the differences between adjacent items of a list or array as such:
+
+[item 1 - item 0 , item 2 - item 1 , item 3 - item 2, ...]
+
+Instead, we may wish to compute the difference between items that are two positions apart. For example, given a 5-element array, we may want:
+
+[item 2 - item 0 , item 3 - item 1 , item 4 - item 2]
+
+The diff_n function below computes this result. Don't worry if the implementation uses unfamiliar features of Python, as long as you understand its behavior.
+
+def diff_n(values, n):
+    return np.array(values)[n:] - np.array(values)[:-n]
+
+diff_n(make_array(1, 10, 100, 1000, 10000), 2)
+array([  99,  990, 9900])
+Question 4: Implement the function changes that takes an array of temperatures for a country, ordered by increasing year. For all two-year periods (e.g., from 1960 to 1962), it computes and returns the number of increases minus the number of decreases.
+
+For example, the array r = make_array(10, 7, 12, 9, 13, 9, 11) contains 3 increases (10 to 12, 7 to 9, and 12 to 13), 1 decrease (13 to 11), and 1 change that is neither an increase or decrease (9 to 9). Therefore, changes(r) would return 2, the difference between 3 increases and 1 decrease.
+
+Hint: Consider using the diff_n function combined with boolean functions which use np.count_non-zero when array elements after using diff_n represent increases and separately when they represent decreases.
+
+def changes(array, years = 2):
+    "Return the number of increases minus the number of decreases after two years."
+    differences = diff_n(array, years)
+    increase = np.count_nonzero(differences > 0)
+    decrease = np.count_nonzero(differences < 0)
+    return increase - decrease
+check('tests/q4.py')
+All tests passed!
+
+Question 5: Assign changes_by_country to a table with one row per country that has two columns: the Country name and the Temperature changes statistic computed across all years in our data set for that country. It may be useful to split this process into two steps. The final table's first 2 rows should look like this:
+
+country	avg changes
+Afghanistan	18
+Africa	8
+Hint: You can use a group method to apply your changes function to each column in the original data set while grouping on each country. See this example from Olympic data below:
+
+NORUSA = Table.read_table('NORUSA.csv')
+NORUSA_NUMBERS = NORUSA.group(['Year','Team']) # Number of athletes per year
+NORUSA_NUMBERS
+Year	Team	count
+1924	Norway	72
+1924	United States	41
+1928	Norway	68
+1928	United States	31
+1932	Norway	66
+1932	United States	54
+1936	Norway	94
+1936	United States	58
+1948	Norway	126
+1948	United States	81
+... (34 rows omitted)
+
+Now compute the increases - decreases for the winter olympics for each team
+Below code allows us to group 'Team' across all the years of the Olympics to give the following table. |Team| Year changes | count changes| |----|---|---| |Norway|20|10| |United States|20|18
+
+Apply this concept to create the table showing net change for each country.
+
+NORUSA_NUMBERS.group('Team',changes)
+Team	Year changes	count changes
+Norway	20	10
+United States	20	18
+country = temps.group('country',changes)
+changes_by_country = country.select('country','avg changes')
+changes_by_country
+country	avg changes
+Afghanistan	18
+Africa	8
+Albania	-22
+Algeria	9
+American Samoa	-3
+Andorra	10
+Angola	-1
+Anguilla	6
+Antigua And Barbuda	0
+Argentina	-1
+... (232 rows omitted)
+
+check('tests/q5.py')
+All tests passed!
+
+Question 6: Assign test_stat to the total increases minus the total decreases for all two-year periods and all countries in our data set. For example, if the temperature in Albania went up 23 times and fell 17 times, the total change for Albania would be 6. We want the total value for all the countries together.
+
+test_stat = sum(changes_by_country.column('avg changes'))
+print('Total increases minus total decreases, across all countries and years:', test_stat)
+Total increases minus total decreases, across all countries and years: 1140
+check('tests/q6.py')
+All tests passed!
+
+"More increases than decreases," one person exclaims, "Temperatures tend to go up across two-year periods. What dire times we live in."
+
+"Not so fast," another person replies, "Even if temperatures just moved up and down uniformly at random, there would be some difference between the increases and decreases. There were a lot of countries and a lot of years, so there were many chances for changes to happen. If country temperature increase and decrease at random with equal probability, perhaps this difference was simply due to chance!"
+
+Based on the null hypothesis above that country temperatures increase and decrease by chance, we can simulate our test statistic. Our test statistic should depend only on whether temperature increased or decreased, not on the size of any change. Thus we choose:
+
+Test Statistic: The number of increases minus the number of decreases
+The cell below samples increases and decreases at random from a uniform distribution 100 times. The final column of the resulting table gives the number of increases and decreases that resulted from sampling in this way. Using sample_from_distribution is faster than using sample followed by group to compute the same result.
+
+uniform = Table().with_columns(
+    "Change", make_array('Increase', 'Decrease'),
+    "Chance", make_array(0.5,        0.5))
+uniform.sample_from_distribution('Chance', 100)
+Change	Chance	Chance sample
+Increase	0.5	45
+Decrease	0.5	55
+Question 7: Complete the simulation below, which samples num_changes increases/decreases at random many times and forms an empirical distribution of your test statistic under the null hypothesis. Your job is to
+
+fill in the function simulate_under_null, which simulates a single sample under the null hypothesis, and
+fill in its argument when it's called below.
+As a hint, num_changes should be approximately the number of countries times the number of time comparisons (you can find the number of year comparisons by using diff_n().
+
+def simulate_under_null(num_chances_to_change):
+    """Simulates some number changing several times, with an equal
+    chance to increase or decrease.  Returns the value of your
+    test statistic for these simulated changes.
+    
+    num_chances_to_change is the number of times the number changes.
+    """
+    uniform = Table().with_columns(
+        "Change", make_array('Increase', 'Decrease'),
+        "Chance", make_array(0.5,        0.5))
+    sample = uniform.sample_from_distribution('Chance', num_chances_to_change)
+    num_increase = np.count_nonzero(np.random.choice(uniform.column('Change'),num_chances_to_change)=='Increase') 
+    num_decrease = np.count_nonzero(np.random.choice(uniform.column('Change'),num_chances_to_change)=='Decrease') 
+    return num_increase - num_decrease
+def empirical_distribution(tbl):
+    num_year_comparisons = sum(diff_n(tbl.column('year'),1))
+    num_changes = len(np.unique(tbl.column('country')))
+    samples = make_array()
+    for i in np.arange(10000):
+        samples = np.append(samples, simulate_under_null(num_changes)) 
+    Table().with_column('Test statistic under null', samples).hist(bins=np.arange(0, max(samples) + max(samples) * 0.1, 2))
+    return samples
+samples = empirical_distribution(temps) 
+
+check('tests/q7.py')
+All tests passed!
+
+Question 8: Complete the analysis as follows:
+
+Compute a P-value. (Hint: you can use np.count_nonzero())
+Using a 5% P-value cutoff, draw a conclusion about the null and alternative hypotheses.
+Describe your findings using simple, non-technical language. What does your analysis tell you about temperatures changes over time? What can you claim about causation from your statistical analysis?
+P-value: The p-value is 0.0
+
+Conclusion about the hypotheses: The null hypothesis is rejected and the alternative hypothesis is favored.
+
+Findings: There is a statistically significant trend that shows an increase in global temperature over the time. However, there may be other factors that influence temperature changes, such as natural climate cycles and other activities that contribute to climate change.
+
+pvalue = np.count_nonzero(samples>test_stat)/len(samples)
+pvalue
+0.0
+Some countries have implemented policies and laws to counteract climate change whereas others have not - we have a table that contains a boolean to indicate whether a country has any policies or laws to protect the earth and then has a number of policies and laws implemented in that country. We can test to see if those countries that have implemented policies to counteract climate change show any difference in changes in temperatures from those countries who have not implemented policies. A natural experiment happens when something other than experimental design applies a treatment to one group and not to another (control) group, and we have some hope that the treatment and control groups don't have any other systematic differences. This is likely not the case globally, but if we did believe that the countries didn't have other systematic differences, how would we set up the experiment.
+
+Data Source: Climate Change Laws of the World
+
+Question 9: Describe this investigation in terms of an experiment. What population are we studying? What is the control group? What is the treatment group? What outcome are we measuring? Be precise!
+
+Write your answers below.
+
+Population: Population is the countries around the world.
+
+Control: The control group is the number of countries that have not implemented policies to counteract climate change.
+
+Treatment: The treatment group is the number of countries that have implemented policies to counteract climate change.
+
+Outcome: The outcome we are measuring is the difference in temperature change between the treatment group and the control group, and observing the change in temperature over time.
+
+laws = Table.read_table('laws.csv')
+laws
+country	haveLaws	numberLaws
+Afghanistan	True	14
+Africa	False	0
+Albania	True	4
+Algeria	True	14
+American Samoa	False	0
+Andorra	True	25
+Angola	True	23
+Anguilla	False	0
+Antigua And Barbuda	False	0
+Argentina	True	19
+... (232 rows omitted)
+
+Question 10: Let's set up to compute an empirical distribution for countries that have laws and policies that attempt to counteract climate change and an empirical distribution for countries that have not implemented laws and policies. We want to focus on the time range between 1990 and 2020 as the majority of laws were implemented in this time period. We're going to split this up into four steps.
+
+Combine the temperature table and the laws table.
+Set year_range to the correct time period.
+Create two tables: one of countries that have climate change laws and one for countries that do not.
+temp_law = temps.join('country', laws)
+year_range = temp_law.where('year', are.between(1990,2020))
+haveLaws = year_range.where('haveLaws', True)
+noLaws = year_range.where('haveLaws', False)
+check('tests/q10.py')
+All tests passed!
+
+Question 11: Calculate the test statistic for both subsets of countries: those that have implemented climate change laws and those that have not implemented these laws.
+
+laws_test_stat = sum(haveLaws.group('country',changes).select('country','avg changes').column('avg changes'))
+laws_test_stat
+199
+nolaws_test_stat = sum(noLaws.group('country',changes).select('country','avg changes').column('avg changes'))
+nolaws_test_stat
+61
+check('tests/q11.py')
+All tests passed!
+
+Question 12: Now using these tables from question 10 and the calculated test statistic from question 11, create an empirical distribution and calculate a p-value.
+
+haveLawsSamples = empirical_distribution(haveLaws)
+lawsPvalue = np.count_nonzero(haveLawsSamples > laws_test_stat) / len(haveLawsSamples)
+print("P-value for countries that have implemented policies to counteract climate change from 1990 to 2020 :" + str(lawsPvalue))
+P-value for countries that have implemented policies to counteract climate change from 1990 to 2020 :0.0
+
+noLawsSamples = empirical_distribution(noLaws)
+nolawsPvalue = np.count_nonzero(noLawsSamples > nolaws_test_stat) / len(noLawsSamples)
+print("P-value for countries that have NOT implemented policies to counteract climate change from 1990 to 2020 :" + str(nolawsPvalue))
+P-value for countries that have NOT implemented policies to counteract climate change from 1990 to 2020 :0.0
+
+Question 13: Explain what our results show in the markdown cell below:
+
+Based on the results from 1990-2020, we can reject the null hypothesis because the p-value is 0.0. The null hypothesis is there is no significant difference in the average temperature changes over time between countries that have implemented policies to counteract climate change and those that have not. We accept the alternative hypothesis which is that there is a significant difference in the average temperature changes over time between the countries that implemented policies and those that have not. This suggests that global temperatures are changing over time and the trend is likely to continue. However, there may be other factors other than climate policies that influence temperature changes over time and that this data does not prove a causal relationship between climate policies and temperature changes.
+
+# For your convenience, you can run this cell to run all the tests at once!
+import glob
+from gofer.ok import check
+correct = 0
+checks = [2, 4, 5, 6, 7, 10, 11]
+total = len(checks)
+for x in checks:
+    print('Testing question {}: '.format(str(x)))
+    g = check('tests/q{}.py'.format(str(x)))
+    if g.grade == 1.0:
+        print("Passed")
+        correct += 1
+    else:
+        print('Failed')
+        display(g)
+
+print('Grade:  {}'.format(str(correct/total)))
+Testing question 2: 
+Passed
+Testing question 4: 
+Passed
+Testing question 5: 
+Passed
+Testing question 6: 
+Passed
+Testing question 7: 
+Passed
+Testing question 10: 
+Passed
+Testing question 11: 
+Passed
+Grade:  1.0
