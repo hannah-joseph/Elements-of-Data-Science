@@ -1,0 +1,566 @@
+Lab 2: Data Types
+Welcome to Lab 2!
+
+Last time, we had our first look at Python and Jupyter notebooks.
+
+In this lab, we are going to look at a few different data types including numbers and text. A piece of text is called a string in Python.
+
+Last, you'll learn more about working with datasets in Python.
+
+First, initialize the grader. Each time you come back to this site to work on the lab, you will need to run this cell again.
+
+from gofer.ok import check
+# Enter your name as a string
+# Example
+dogname = 'Leo'
+# Your name
+name = "Hannah"
+print(name)
+Hannah
+1. Data Types and Variables
+Variables (names) are central to coding in any programming language and can store numbers, strings such as "Hello World", and even whole data sets. It is important that we understand the concept of data type because in coding the functions that we can use to alter the values stored in variables depend on the data type.
+
+number = 6.75
+The type function in Python has a variable name as the argument and returns the data type
+
+type(number)
+float
+The variable, number contains a value with a datatype of float meaning floating point number. A float can be converted to an integer with the int Python function.
+
+int(number)
+6
+inumber = int(number)
+Below determine the type of inumber
+
+type(inumber)
+int
+A string is another data type, test this out by checking the type of dogname defined above.
+
+type(dogname)
+str
+2.1 Application: A physics experiment
+On the Apollo 15 mission to the Moon, astronaut David Scott famously replicated Galileo's physics experiment in which he showed that gravity accelerates objects of different mass at the same rate. Because there is no air resistance for a falling object on the surface of the Moon, even two objects with very different masses and densities should fall at the same rate. David Scott compared a feather and a hammer.
+
+You can run the following cell to watch a video of the experiment.
+
+from IPython.display import YouTubeVideo
+# The original URL is:
+#   https://www.youtube.com/watch?v=U7db6ZeLR5s
+YouTubeVideo("U7db6ZeLR5s")
+
+Here's the transcript of the video:
+
+167:22:06 Scott: Well, in my left hand, I have a feather; in my right hand, a hammer. And I guess one of the reasons we got here today was because of a gentleman named Galileo, a long time ago, who made a rather significant discovery about falling objects in gravity fields. And we thought where would be a better place to confirm his findings than on the Moon. And so we thought we'd try it here for you. The feather happens to be, appropriately, a falcon feather for our Falcon. And I'll drop the two of them here and, hopefully, they'll hit the ground at the same time.
+
+167:22:43 Scott: How about that!
+
+167:22:45 Allen: How about that! (Applause in Houston)
+
+167:22:46 Scott: Which proves that Mr. Galileo was correct in his findings.
+
+Newton's Law. Using this footage, we can also attempt to confirm another famous bit of physics: Newton's law of universal gravitation. Newton's laws predict that any object dropped near the surface of the Moon should fall
+
+To verify the accuracy of this law, we will calculate the difference between the predicted distance the hammer drops and the actual distance. (If they are different, it might be because Newton's laws are wrong, or because our measurements are imprecise, or because there are other factors affecting the hammer for which we haven't accounted.)
+
+Someone studied the video and estimated that the hammer was dropped 113 cm from the surface. Counting frames in the video, the hammer falls for 1.2 seconds (36 frames).
+
+Question 3
+Complete the code in the next cell to fill in the data from the experiment.
+
+# t, the duration of the fall in the experiment, in seconds.
+# Fill this in.
+time = 1.2
+
+# The estimated distance the hammer actually fell, in meters.
+# Fill this in.
+estimated_distance_m = 1.13
+check('tests/q3.py')
+All tests passed!
+
+Question 4
+Now, complete the code in the next cell to compute the difference between the predicted and estimated distances (in meters) that the hammer fell in this experiment.
+
+# First, we've written down the values of the 3 universal
+# constants that show up in Newton's formula.
+
+# G, the universal constant measuring the strength of gravity.
+gravity_constant = 6.674 * 10**-11
+
+# M, the moon's mass, in kilograms.
+moon_mass_kg = 7.34767309 * 10**22
+
+# R, the radius of the moon, in meters.
+moon_radius_m = 1.737 * 10**6
+
+# The distance the hammer should have fallen over the
+# duration of the fall, in meters, according to Newton's
+# law of gravity.  The text above describes the formula
+# for this distance given by Newton's law.
+# **YOU FILL THIS PART IN.**
+predicted_distance_m = 0.5*(gravity_constant)*(moon_mass_kg)/(moon_radius_m)**2*(1.2)**2
+
+# Here we've computed the difference between the predicted
+# fall distance and the distance we actually measured.
+# If you've filled in the above code, this should just work.
+difference = predicted_distance_m - estimated_distance_m
+difference
+0.040223694659304865
+check('tests/q4.py')
+All tests passed!
+
+3. Text
+Programming doesn't just concern numbers. Text is one of the most common types of values used in programs.
+
+A snippet of text is represented by a string value in Python. The word "string" is a programming term for a sequence of characters. A string might contain a single character, a word, a sentence, or a whole book.
+
+To distinguish text data from actual code, we demarcate strings by putting quotation marks around them. Single quotes (') and double quotes (") are both valid, but the types of opening and closing quotation marks must match. The contents can be any sequence of characters, including numbers and symbols.
+
+Just like names can be given to numbers, names can be given to string values. The names and strings aren't required to be similar in any way. Any name can be assigned to any string.
+
+one = 'two'
+plus = '*'
+print(one, plus, one)
+two * two
+Question 5
+Yuri Gagarin was the first person to travel through outer space. When he emerged from his capsule upon landing on Earth, he reportedly had the following conversation with a woman and girl who saw the landing:
+
+The woman asked: "Can it be that you have come from outer space?"
+Gagarin replied: "As a matter of fact, I have!"
+
+The cell below contains unfinished code. Fill in the ...s so that it prints out this conversation exactly as it appears above.
+
+woman_asking = 'The woman asked:'
+woman_quote = '"Can it be that you have come from outer space?"'
+gagarin_reply = 'Gagarin replied:'
+gagarin_quote = '"As a matter of fact, I have!"'
+
+print(woman_asking, woman_quote)
+print(gagarin_reply, gagarin_quote)
+The woman asked: "Can it be that you have come from outer space?"
+Gagarin replied: "As a matter of fact, I have!"
+check('tests/q5.py')
+All tests passed!
+
+4. Calling functions
+The most common way to combine or manipulate values in Python is by calling functions. Python comes with many built-in functions that perform common operations.
+
+For example, the abs function takes a single number as its argument and returns the absolute value of that number. The absolute value of a number is its distance from 0 on the number line, so abs(5) is 5 and abs(-5) is also 5.
+
+4.1. Application: Computing walking distances
+Chunhua is on the corner of 7th Avenue and 42nd Street in Midtown Manhattan, and she wants to know far she'd have to walk to get to Gramercy School on the corner of 10th Avenue and 34th Street.
+
+She can't cut across blocks diagonally, since there are buildings in the way. She has to walk along the sidewalks. Using the map below, she sees she'd have to walk 3 avenues (long blocks) and 8 streets (short blocks). In terms of the given numbers, she computed 3 as the difference between 7 and 10, in absolute value, and 8 similarly.
+
+Chunhua also knows that blocks in Manhattan are all about 80m by 274m (avenues are farther apart than streets). So in total, she'd have to walk 
+(80×|42−34|+274×|7−10|) meters to get to the park. visual map about distance calculation
+
+Question 6
+Finish the line num_avenues_away = ... in the next cell so that the cell calculates the distance Chunhua must walk and gives it the name manhattan_distance. Everything else has been filled in for you. Use the abs function.
+
+# Here's the number of streets away:
+num_streets_away = abs(42-34)
+
+# Compute the number of avenues away in a similar way:
+num_avenues_away = abs(7-10)
+
+street_length_m = 80
+avenue_length_m = 274
+
+# Now we compute the total distance Chunhua must walk.
+manhattan_distance = street_length_m*num_streets_away + avenue_length_m*num_avenues_away
+
+# We've included this line so that you see the distance
+# you've computed when you run this cell.  You don't need
+# to change it, but you can if you want.
+manhattan_distance
+1462
+Be sure to run the next cell to test your code.
+
+check('tests/q6.py')
+All tests passed!
+
+Multiple arguments
+Some functions take multiple arguments, separated by commas. For example, the built-in max function returns the maximum argument passed to it.
+
+max(2, -3, 4, -5)
+4
+4.2 Understanding nested expressions
+Function calls and arithmetic expressions can themselves contain expressions. You saw an example in the last question:
+
+abs(42-34)
+
+has 2 number expressions in a subtraction expression in a function call expression. And you probably wrote something like abs(7-10) to compute num_avenues_away.
+
+Nested expressions can turn into complicated-looking code. However, the way in which complicated expressions break down is very regular.
+
+Question 7
+Given the heights of the Splash Triplets from the Golden State Warriors, write an expression that computes the smallest difference between any of the three heights. Your expression shouldn't have any numbers in it, only function calls and the names klay, steph, and kevin. Give the value of your expression the name min_height_difference.
+
+# The three players' heights, in meters:
+klay =  2.01 # Klay Thompson is 6'7"
+steph = 1.91 # Steph Curry is 6'3"
+kevin = 2.06 # Kevin Durant is officially 6'9", but many suspect that he is taller.
+             # (Further complicating matters, membership of the "Splash Triplets" 
+             #  is disputed, since it was originally used in reference to 
+             #  Klay Thompson, Steph Curry, and Draymond Green.)
+
+# We'd like to look at all 3 pairs of heights, compute the absolute
+# difference between each pair, and then find the smallest of those
+# 3 absolute differences.  This is left to you!  If you're stuck,
+# try computing the value for each step of the process (like the
+# difference between Klay's heigh and Steph's height) on a separate
+# line and giving it a name (like klay_steph_height_diff).
+klay_steph_height_difference = abs(klay-steph)
+steph_kevin_height_difference = abs(steph-kevin)
+min_height_difference = abs(kevin-klay)
+check('tests/q7.py')
+All tests passed!
+
+4.3 String Methods
+Strings can be transformed using methods, which are functions that involve an existing string and some other arguments. One example is the replace method, which replaces all instances of some part of a string with some alternative.
+
+A method is invoked on a string by placing a . after the string value, then the name of the method, and finally parentheses containing the arguments. Here's a sketch, where the < and > symbols aren't part of the syntax; they just mark the boundaries of sub-expressions.
+
+<expression that evaluates to a string>.<method name>(<argument>, <argument>, ...)
+
+Try to predict the output of these examples, then execute them.
+
+'hitchhiker'.replace('hi', 'ma')
+'matchmaker'
+# Replace a sequence of letters, which appears twice
+'hitchhiker'.replace('hi', 'ma')
+'matchmaker'
+Once a name is bound to a string value, methods can be invoked on that name as well. The name is still bound to the original string, so a new name is needed to capture the result.
+
+sharp = 'edged'
+hot = sharp.replace('ed', 'ma')
+print('sharp:', sharp)
+print('hot:', hot)
+sharp: edged
+hot: magma
+Just like we can nest functions together such as what you did in question 4.2, you can also invoke a method on the output of another method call, this is also sometimes called 'chained' methods.
+
+# Calling replace on the output of another call to replace
+'train'.replace('t', 'ing').replace('in', 'de')
+'degrade'
+Here's a picture of how Python evaluates a "chained" method call like that:
+
+In 'train'.replace('t', 'ing').replace('in', 'de'), 'train'.replace('t', 'ing')' is ran first and evaluates to 'ingrain'. Then 'ingrain'.replace('in', 'de') is evaluated to 'degrade'
+
+Question 8
+Assign strings to the names you and this so that the final expression evaluates to a 10-letter English word with three double letters in a row. Essentially we're starting with the word 'beeper' and we want to convert this to another word using the string method replace.
+
+Hint: The call to print is there to print out the intermediate result called the. This should be an English word with two double letters in a row.
+
+Hint 2: Run the tests if you're stuck. They'll give you some hints.
+
+you ='keep'
+this = 'book'
+a ='beeper'
+the = a.replace('p', you).replace('bee', this)
+print('the:', the)
+the.replace('bee', this)
+the: bookkeeper
+'bookkeeper'
+check('tests/q8.py')
+All tests passed!
+
+Other string methods do not take any arguments at all, because the original string is all that's needed to compute the result. In these cases, parentheses are still needed, but there's nothing in between the parentheses. Here are some methods that take no arguments:
+
+Method name	Value
+lower	a lowercased version of the string
+upper	an uppercased version of the string
+capitalize	a version with the first letter capitalized
+title	a version with the first letter of every word capitalized
+All these string methods are useful, but most programmers don't memorize their names or how to use them. Instead, people usually just search the internet for documentation and examples. A complete list of string methods appears in the Python language documentation. Stack Overflow has a huge database of answered questions that often demonstrate how to use these methods to achieve various ends.
+
+4.3.1 Strings as function arguments
+String values, like numbers, can be arguments to functions and can be returned by functions. The function len takes a single string as its argument and returns the number of characters in the string: its length.
+
+Note that it doesn't count words. len("one small step for man") is 22, not 5.
+
+Question 9
+Use len to find out the number of characters in the very long string in the next cell. (It's the first sentence of the English translation of the French Declaration of the Rights of Man.) The length of a string is the total number of characters in it, including things like spaces and punctuation. Assign sentence_length to that number.
+
+a_very_long_sentence = "The representatives of the French people, organized as a National Assembly, believing that the ignorance, neglect, or contempt of the rights of man are the sole cause of public calamities and of the corruption of governments, have determined to set forth in a solemn declaration the natural, unalienable, and sacred rights of man, in order that this declaration, being constantly before all the members of the Social body, shall remind them continually of their rights and duties; in order that the acts of the legislative power, as well as those of the executive power, may be compared at any moment with the objects and purposes of all political institutions and may thus be more respected, and, lastly, in order that the grievances of the citizens, based hereafter upon simple and incontestable principles, shall tend to the maintenance of the constitution and redound to the happiness of all."
+sentence_length = len(a_very_long_sentence)
+sentence_length
+896
+check('tests/q9.py')
+All tests passed!
+
+4.3.2 Converting to and from Strings
+Strings and numbers are different types of values, even when a string contains the digits of a number. For example, evaluating the following cell causes an error because an integer cannot be added to a string.
+
+8 + int("8")
+16
+However, there are built-in functions to convert numbers to strings and strings to numbers.
+
+Function name	Effect	Example
+int	Converts a string of digits and perhaps a negative sign to an integer (int) value	int("42")
+float	Converts a string of digits and perhaps a negative sign and decimal point to a decimal (float) value	float("4.2")
+str	Converts any value to a string (str) value	str(42)
+What do you think the following cell will evaluate to?
+
+8 + int("8")
+16
+Question 10
+Use replace and int together to compute the time between between the the year 105 BCE (Ts'ai Lun invents paper based on tree bark for the Emperor of China) and the year 1440 AD (Start of the Print Revolution. Try not to use any numbers in your solution, but instead manipulate the strings that are provided.
+
+Hint: It's ok to be off by one year. In historical calendars, there is no year zero, but astronomical calendars do include year zero to simplify calculations.
+
+invented = 'BC 105'
+revolution = 'AD 1440'
+start = int (invented.replace('BC ', '-'))
+end = int(revolution.replace('AD ', '+'))
+print('The time between the first invention of paper and the print revolution is', end-start, 'years from', invented, 'to', revolution)
+The time between the first invention of paper and the print revolution is 1545 years from BC 105 to AD 1440
+check('tests/q10.py')
+All tests passed!
+
+4.4 Importing code
+What has been will be again,
+what has been done will be done again;
+there is nothing new under the sun.
+
+Most programming involves work that is very similar to work that has been done before. Since writing code is time consuming, it's good to rely on others' published code when you can. Rather than copy-pasting, Python allows us to import other code, creating a module that contains all of the names created by that code.
+
+Python includes many useful modules that are just an import away. We'll look at the math module as a first example. The math module is extremely useful in computing mathematical expressions in Python.
+
+Suppose we want to very accurately compute the area of a circle with radius 5 meters. For that, we need the constant 
+π
+, which is roughly 3.14. Conveniently, the math module has pi defined for us:
+
+import math
+radius = 5
+area_of_circle = radius**2 * math.pi
+area_of_circle
+78.53981633974483
+pi is defined inside math, and the way that we access names that are inside modules is by writing the module's name, then a dot, then the name of the thing we want:
+
+<module name>.<name>
+
+In order to use a module at all, we must first write the statement import <module name>. That statement creates a module object with things like pi in it and then assigns the name math to that module. Above we have done that for math.
+
+Modules can provide other named things, including functions. For example, math provides the name sin for the sine function. Having imported math already, we can write math.sin(3) to compute the sine of 3. (Note that this sine function considers its argument to be in radians, not degrees. 180 degrees are equivalent to 
+π
+ radians.)
+
+Question 11
+A π/4-radian (45-degree) angle forms a right triangle with equal base and height, pictured below. If the hypotenuse (the radius of the circle in the picture) is 1, then the height is 
+sin(π/4). Compute that using sin and pi from the math module. Give the result the name sine_of_pi_over_four.
+(Source: Wolfram MathWorld)
+
+import math
+radius= 1 
+sine_of_pi_over_four = math.sin(math.pi/4)
+sine_of_pi_over_four
+0.7071067811865475
+check('tests/q11.py')
+All tests passed!
+
+For your reference, here are some more examples of functions from the math module.
+
+Note how different methods take in different number of arguments. Often, the documentation of the module will provide information on how many arguments is required for each method.
+
+# Calculating factorials.
+math.factorial(5)
+120
+# Calculating logarithms (the logarithm of 8 in base 2).
+# The result is 3 because 2 to the power of 3 is 8.
+math.log(8, 2)
+3.0
+There's many variations of how we can import methods from outside sources. For example, we can import just a specific method from an outside source, we can rename a library we import, and we can import every single method from a whole library.
+
+# Importing just cos and pi from math.
+# Now, we don't have to use "math." before these names.
+from math import cos, pi
+print(cos(pi))
+-1.0
+# We can nickname math as something else, if we don't want to type the name math
+import math as m
+m.log(m.pi)
+1.1447298858494002
+# Lastly, we can import ever thing from math and use all of its names without "math."
+from math import *
+log(pi)
+1.1447298858494002
+5. Arrays
+Up to now, we haven't done much that you couldn't do yourself by hand, without going through the trouble of learning Python. Computers are most useful when a small amount of code performs a lot of work by performing the same action to many different things.
+
+For example, in the time it takes you to calculate the 18% tip on a restaurant bill, a laptop can calculate 18% tips for every restaurant bill paid by every human on Earth that day. (That's if you're pretty fast at doing arithmetic in your head!)
+
+Arrays are how we put many values in one place so that we can operate on them as a group. For example, if billions_of_numbers is an array of numbers, the expression
+
+.18 * billions_of_numbers
+
+gives a new array of numbers that's the result of multiplying each number in billions_of_numbers by .18 (18%). Arrays are not limited to numbers; we can also put all the words in a book into an array of strings.
+
+Concretely, an array is a collection of values of the same type, like a column in an Excel spreadsheet.
+
+In Excel, columns of text are like array of strings for tables.  The same can be said about numbers (ints, floats) as well
+
+5.1. Making arrays
+You can type in the data that goes in an array yourself, but that's not typically how programs work. Normally, we create arrays by loading them from an external source, like a data file.
+
+First, though, let's learn how to start from scratch. Execute the following cell so that all the names from the datascience module are available to you. The documentation for this module is available at http://data8.org/datascience.
+
+from datascience import *
+Now, to create an array, call the function make_array. Each argument you pass to make_array will be in the array it returns. Run this cell to see an example:
+
+make_array(0.125, 4.75, -1.3)
+array([ 0.125,  4.75 , -1.3  ])
+Each value in an array (in the above case, the numbers 0.125, 4.75, and -1.3) is called an element or item of that array.
+
+Arrays themselves are also values, just like numbers and strings. That means you can assign them names or use them as arguments to functions.
+
+Question 12
+Make an array containing the numbers 0, 1, -1, 
+π
+, and 
+e
+, in that order. Name it interesting_numbers. Hint: How did you get the values 
+π
+ and 
+e
+ earlier? You can refer to them in exactly the same way here.
+
+import math
+interesting_numbers = make_array(0, 1, -1, math.pi, math.e)
+interesting_numbers
+array([ 0.        ,  1.        , -1.        ,  3.14159265,  2.71828183])
+check('tests/q12.py')
+All tests passed!
+
+5.2. np.arange
+Arrays are provided by a package called NumPy (pronounced "NUM-pie" or, if you prefer to pronounce things incorrectly, "NUM-pee"). The package is called numpy, but it's standard to rename it np for brevity. You can do that with:
+
+import numpy as np
+
+Very often in data science, we want to work with many numbers that are evenly spaced within some range. NumPy provides a special function for this called arange. np.arange(start, stop, space) produces an array with all the numbers starting at start and counting up by space, stopping before stop is reached.
+
+For example, the value of np.arange(1, 6, 2) is an array with elements 1, 3, and 5 -- it starts at 1 and counts up by 2, then stops before 6. In other words, it's equivalent to make_array(1, 3, 5).
+
+np.arange(4, 9, 1) is an array with elements 4, 5, 6, 7, and 8. (It doesn't contain 9 because np.arange stops before the stop value is reached.)
+
+Question 13
+Import numpy as np and then use np.arange to create an array with the multiples of 99 from 0 up to (and including) 9999. (So its elements are 0, 99, 198, 297, etc.)
+
+import numpy as np
+multiples_of_99 = np.arange(0, 10000, 99)
+multiples_of_99
+array([   0,   99,  198,  297,  396,  495,  594,  693,  792,  891,  990,
+       1089, 1188, 1287, 1386, 1485, 1584, 1683, 1782, 1881, 1980, 2079,
+       2178, 2277, 2376, 2475, 2574, 2673, 2772, 2871, 2970, 3069, 3168,
+       3267, 3366, 3465, 3564, 3663, 3762, 3861, 3960, 4059, 4158, 4257,
+       4356, 4455, 4554, 4653, 4752, 4851, 4950, 5049, 5148, 5247, 5346,
+       5445, 5544, 5643, 5742, 5841, 5940, 6039, 6138, 6237, 6336, 6435,
+       6534, 6633, 6732, 6831, 6930, 7029, 7128, 7227, 7326, 7425, 7524,
+       7623, 7722, 7821, 7920, 8019, 8118, 8217, 8316, 8415, 8514, 8613,
+       8712, 8811, 8910, 9009, 9108, 9207, 9306, 9405, 9504, 9603, 9702,
+       9801, 9900, 9999])
+check('tests/q13.py')
+All tests passed!
+
+5.3. Application: Temperature readings
+NOAA (the US National Oceanic and Atmospheric Administration) operates weather stations that measure surface temperatures at different sites around the United States. The hourly readings are publicly available.
+
+Suppose we download all the hourly data from the Oakland, California site for the month of December 2015. To analyze the data, we want to know when each reading was taken, but we find that the data don't include the timestamps of the readings (the time at which each one was taken).
+
+However, we know the first reading was taken at the first instant of December 2015 (midnight on December 1st) and each subsequent reading was taken exactly 1 hour after the last.
+
+Question 14
+Create an array of the time, in seconds, since the start of the month at which each hourly reading was taken. Name it collection_times.
+
+Hint 1: There were 31 days in December, which is equivalent to (
+31
+×
+24
+) hours or (
+31
+×
+24
+×
+60
+×
+60
+) seconds. So your array should have 
+31
+×
+24
+ elements in it.
+
+Hint 2: The len function works on arrays, too. If your collection_times isn't passing the tests, check its length and make sure it has 
+31
+×
+24
+ elements.
+
+import numpy as np
+collection_times = np.arange (0,31*24*60*60,60**2)
+collection_times
+len(collection_times)
+744
+check('tests/q14.py')
+All tests passed!
+
+Question 15
+The powers of 2 (2^0=1,2^1=2,2^2=4, etc) arise frequently in computer science. (For example, you may have noticed that storage on smartphones or USBs come in powers of 2, like 16 GB, 32 GB, or 64 GB.) Use np.arange and the exponentiation operator ** to compute the first 15 powers of 2, starting from 2^0.
+
+import numpy as np
+powers_of_2 = 2**np.arange(15)
+powers_of_2
+array([    1,     2,     4,     8,    16,    32,    64,   128,   256,
+         512,  1024,  2048,  4096,  8192, 16384])
+check('tests/q15.py')
+All tests passed!
+
+6. Success!
+Congratulations, you're done with lab 2! Be sure to
+
+run all the tests and verify that they all pass (the next cell has a shortcut for that),
+Save and Checkpoint from the File menu,
+Download as a html or ipynb Submit this to canvas for credit!
+import glob
+from gofer.ok import check
+for x in range(3, 16):
+    print('Testing question {}: '.format(str(x)))
+    display(check('tests/q{}.py'.format(str(x))))
+Testing question 3: 
+All tests passed!
+
+Testing question 4: 
+All tests passed!
+
+Testing question 5: 
+All tests passed!
+
+Testing question 6: 
+All tests passed!
+
+Testing question 7: 
+All tests passed!
+
+Testing question 8: 
+All tests passed!
+
+Testing question 9: 
+All tests passed!
+
+Testing question 10: 
+All tests passed!
+
+Testing question 11: 
+All tests passed!
+
+Testing question 12: 
+All tests passed!
+
+Testing question 13: 
+All tests passed!
+
+Testing question 14: 
+All tests passed!
+
+Testing question 15: 
+All tests passed!
