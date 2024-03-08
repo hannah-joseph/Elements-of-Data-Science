@@ -1,0 +1,323 @@
+Lab 5: Probability & Randomization
+Welcome to our 2nd Module on statistics and lab 5! This week, we will go over conditionals and iteration, and introduce the concept of randomness. Randomness and probability are central concepts to statistics. All of this material is covered in Chapter 8 of the textbook.
+
+First, set up the tests and imports by running the cell below.
+
+name = "Hannah"
+name
+'Hannah'
+import numpy as np
+from datascience import *
+%matplotlib inline
+import matplotlib.pyplot as plt
+plt.style.use('fivethirtyeight')
+
+# Fix for datascience plots
+import collections as collections
+import collections.abc as abc
+collections.Iterable = abc.Iterable
+
+# These lines load the tests.
+from gofer.ok import check
+1. Conditionals
+In Python, Boolean values can either be True or False. We get Boolean values when using comparison operators, among which are < (less than), > (greater than), and == (equal to). For a complete list, refer to Booleans and Comparison at the start of Chapter 8.
+
+Run the cell below to see an example of a comparison operator in action.
+
+bool_expression = 3 > 1 + 1
+bool_expression
+True
+Arrays are compatible with comparison operators. The output is an array of boolean values.
+
+make_array(1, 5, 7, 8, 3, -1) > 3
+array([False,  True,  True,  True, False, False], dtype=bool)
+You're hanging out with friends and ordered pizza. You have a stack of pizza boxes that include plain cheese, veggie, supreme, and pepperoni.
+
+Using the function call np.random.choice(array_name), let's simulate opening a pizza box at random. Start by running the cell below several times, and observe how the results change.
+
+pizza = make_array('cheese', 'veggie', 'supreme', 'pepperoni')
+np.random.choice(pizza)
+'supreme'
+Question 1: Assume we took 7 slices of pizza at random, and stored the results in an array called seven_slices. Find the number of slices of pepperoni pizza (do not hardcode the answer).
+
+Hint: Our solution involves a comparison operator and the np.count_nonzero method.
+
+seven_slices = make_array('cheese', 'supreme', 'cheese', 'pepperoni', 'veggie', 'veggie', 'cheese')
+number_pepperoni = np.count_nonzero(seven_slices == "pepperoni")
+number_pepperoni
+1
+check('tests/q1.py')
+All tests passed!
+
+Conditional Statements
+
+A conditional statement is made up of many lines that allow Python to choose from different alternatives based on whether some condition is true.
+
+Here is a basic example.
+
+def sign(x):
+    if x > 0:
+        return 'Positive'
+How the function works is if the input x is greater than 0, we get the string 'Positive' back.
+
+If we want to test multiple conditions at once, we use the following general format.
+
+if <if expression>:
+    <if body>
+elif <elif expression 0>:
+    <elif body 0>
+elif <elif expression 1>:
+    <elif body 1>
+...
+else:
+    <else body>
+Only one of the bodies will ever be executed. Each if and elif expression is evaluated and considered in order, starting at the top. As soon as a true value is found, the corresponding body is executed, and the rest of the expression is skipped. If none of the if or elif expressions are true, then the else body is executed. For more examples and explanation, refer to Section 8.1.
+
+Question 2: We want to write a function that returns the price of a pizza depending on the type. The function takes in the type of pizza as a string and returns a price: 10 dollars for cheese, 12 dollars for veggie, 13 dollars for pepperoni, and 15 dollars for supreme.
+
+def pizza_price(pizza):
+    if pizza == 'cheese':
+        return 10
+    # next condition should return 12
+    elif pizza == 'veggie':
+        return 12
+    # next condition should return 13
+    elif pizza == 'pepperoni':
+        return 13
+    # next condition should return 15
+    elif pizza == 'supreme':
+        return 15
+
+plain_price = pizza_price('cheese')
+plain_price
+10
+check('tests/q2.py')
+All tests passed!
+
+2. Iteration
+Using a for statement, we can perform a task multiple times. This is known as iteration. Here, we'll simulate drawing different suits from a deck of cards.
+
+suits = make_array("♤", "♡", "♢", "♧")
+
+draws = make_array()
+
+repetitions = 6
+
+for i in np.arange(repetitions):
+    draws = np.append(draws, np.random.choice(suits))
+
+draws
+array(['♤', '♤', '♤', '♢', '♡', '♡'],
+      dtype='<U32')
+Another use of iteration is to loop through a set of values. For instance, we can print out all of the colors of the rainbow.
+
+rainbow = make_array("red", "orange", "yellow", "green", "blue", "indigo", "violet")
+
+for color in rainbow:
+    print(color)
+red
+orange
+yellow
+green
+blue
+indigo
+violet
+We can see that the indented part of the for loop, known as the body, is executed once for each item in rainbow. Note that the name color is arbitrary; we could easily have named it something else.
+
+Question 3: You're working at a pizza shop, and we want to simulate the amount of money the shop brings in over two weeks (the shop sells 500 pizzas a week on average). Write code that simulates the total money made after 2 weeks using your pizza_price function above.
+
+possible_pizzas = make_array('cheese', 'veggie', 'pepperoni', 'supreme')
+pizzas = 1000
+pizza_choice = np.random.choice(possible_pizzas, pizzas)
+total_money = 0
+
+for i in pizza_choice:
+    cost = pizza_price(i)
+    total_money+= cost 
+     
+
+print(total_money)
+12388
+check('tests/q3.py')
+All tests passed!
+
+Question 4: Charles Darwin is a famous naturalist and biologist from the late 1800s. While Darwin is known for several different theories, one of his most well known theory involved the finches on Galapagos Islands and helped form his theory on natural selection and speciation. In this question, we are going to loop through Charles Darwin's book on the Origin of Species and count up the number of times he refers to bird or birds in the text.
+
+darwin_string = open('darwin_origin_species.txt', encoding='utf-8').read()
+darwin_words = np.array(darwin_string.split())
+
+birds = make_array()
+
+for i in darwin_words:
+    if i== 'bird':
+        birds = np.append(birds,i)
+    elif i== 'birds':
+        birds = np.append(birds,i)
+
+birds= np.count_nonzero(birds)
+birds 
+99
+import numpy as np
+darwin_string = open('darwin_origin_species.txt', encoding='utf-8').read()
+darwin_words = np.array(darwin_string.split())
+len(darwin_words)
+155622
+check('tests/q4.py')
+All tests passed!
+
+3. Probability
+Astronomers have their telescope pointed towards a particular section of sky. During an hour period, astronomers have 0.7 chance of seeing a Meteoroid in the sky.
+
+Question 5: What is the probability that the astronomer will not see a Meteoroid in this hour?
+
+# probability of no meteoroid = 1-0.7 = 0.3
+no_meteoroid = 0.3/1
+no_meteoroid
+0.3
+check('tests/q5.py')
+All tests passed!
+
+Question 6: What is the probability of seeing a meteroid in the first hour and then seeing a meteoroid in the second hour?
+
+two_meteoroids = 0.7/1 * 0.7/1
+two_meteoroids
+0.48999999999999994
+check('tests/q6.py')
+All tests passed!
+
+Question 7: A club on campus is holding a contest. There is a bag with two red marbles, two green marbles, and two blue marbles. You have to draw three marbles separately. In order to win, all three of these marbles must be of different colors. What is the probability of you winning the contest?
+
+winning_prob = 6/15
+winning_prob
+0.4
+check('tests/q7.py')
+All tests passed!
+
+4. Application: Groundhog's Day
+Researchers seek to understand whether Groundhogs are able to predict the onset of spring any better than chance. In this particular study, researchers look at 33 groundhogs across North America (USA and Canada) and gather data for several years. This includes whether the groundhog saw its shadow and whether the onset of spring was late or early - which for our uses are going to be the two columns we're going to focus on. In the cell below, we read in dataset into a table called groundhogdata.
+
+groundhogdata = Table.read_table('GroundHogData/summarizedGroundhogData_20210326.csv')
+groundhogdata
+hogID	year	shadowPres	dateSample	julDay	GDD	cGDD	numObs	meanJulSpringDay	sdJulSpringDay	seJulSpringDay	earlyOrLate
+BC	2018	yes	2018-04-11	101	3.05556	127.222	30	85.8667	12.4367	2.27062	late
+BC	2019	no	2019-04-06	96	8.33333	123.889	30	85.8667	12.4367	2.27062	late
+BECK	2006	yes	2006-02-15	46	7.22222	127.006	30	72.4333	14.6586	2.67628	early
+BECK	2007	no	2007-03-14	73	14.1667	129.167	30	72.4333	14.6586	2.67628	late
+BECK	2008	no	2008-03-17	77	0.833333	128.611	30	72.4333	14.6586	2.67628	late
+BECK	2009	yes	2009-03-10	69	12.2222	130	30	72.4333	14.6586	2.67628	early
+BECK	2010	no	2010-03-21	80	7.22222	129.444	30	72.4333	14.6586	2.67628	late
+BECK	2011	no	2011-03-20	79	7.77778	133.611	30	72.4333	14.6586	2.67628	late
+BECK	2012	no	2012-03-07	67	13.3333	129.444	30	72.4333	14.6586	2.67628	early
+BECK	2013	no	2013-03-30	89	3.88889	128.611	30	72.4333	14.6586	2.67628	late
+... (520 rows omitted)
+
+Each groundhog has the options of either seeing their shadow or not seeing their shadow. If the groundhog sees their shadow, they are then predicting that spring will come late. If a groundhog doesn't see their shadow, then they are predicting that spring will come early. We are trying to see if the groundhog has special perception and can predict the onset of Spring better than a coin toss (50/50).
+
+Question 8: Create a table that contains all the rows where the Groundhogs correctly predicted the onset of Spring. Since there are two ways the groundhogs could be correct, you may want to make multiple tables and then combine them.
+
+early = groundhogdata.where("shadowPres", "no").where("earlyOrLate", "early")
+late = groundhogdata.where("shadowPres", "yes").where("earlyOrLate", "late")
+correct_tbl = early.append(late)
+correct_tbl
+hogID	year	shadowPres	dateSample	julDay	GDD	cGDD	numObs	meanJulSpringDay	sdJulSpringDay	seJulSpringDay	earlyOrLate
+BECK	2012	no	2012-03-07	67	13.3333	129.444	30	72.4333	14.6586	2.67628	early
+CACK	2017	no	2017-01-15	15	16.6667	129.722	30	23.9	8.45821	1.54425	early
+CECK	2015	no	2015-01-25	25	6.94444	133.056	28	28.0357	17.0804	3.22789	early
+CECK	2017	no	2017-01-20	20	6.66667	131.667	28	28.0357	17.0804	3.22789	early
+CS	2012	no	2012-02-28	59	3.88889	129.722	30	76.8667	15.4691	2.82425	early
+CS	2016	no	2016-03-06	66	1.38889	128.611	30	76.8667	15.4691	2.82425	early
+CS	2017	no	2017-02-25	56	13.0556	133.333	30	76.8667	15.4691	2.82425	early
+CS	2018	no	2018-02-28	59	8.05556	127.222	30	76.8667	15.4691	2.82425	early
+DKDV	2018	no	2018-03-02	61	1.94444	130	26	73.8462	16.3528	3.20706	early
+EE	2012	no	2012-02-01	32	12.7778	131.111	30	50.8333	15.7329	2.87241	early
+... (261 rows omitted)
+
+check('tests/q8.py')
+All tests passed!
+
+Question 9: Calculate the percent of time that the groundhogs correctly identified the onset of Spring.
+
+num_correct = 1/1.955799 * 100
+num_correct
+51.12999853256904
+check('tests/q9.py')
+All tests passed!
+
+Now that we know how often groundhogs across North America correctly identify the onset of spring, we want to simulate groundhog data to see if the groundhogs do better than random.
+
+Question 10: Let's set up the needed options and iterations. Set the possible options for whether the groundhog sees shadows and the spring onset. Set num_observations to the total number of groundhog observations from the dataset.
+
+shadow_options = make_array("yes","no")
+spring_options = make_array("early","late")
+num_observations = 530
+check('tests/q10.py')
+All tests passed!
+
+Question 11: Now let's set up the simulation. For each of the observations, random choose whether the groundhog sees their shadow and then randomly choose when spring starts. Depending on the random choices, we can use conditional statements to either record the choice as right or wrong by adding one to right or wrong variables (increment). Use concepts in Questions 2 and 3.
+
+right = 0 # Initialize at zero 
+wrong = 0
+# Iteration
+for obs in range(num_observations):
+    shadow = np.random.choice(shadow_options)
+    spring = np.random.choice(spring_options)
+    # Now decide of silicon groundhog is right or wrong
+    if shadow == 'yes' and spring == 'late':
+        right+= 1
+    elif shadow == 'no' and spring == 'early':
+        right+= 1
+    else:
+        wrong+= 1
+    
+
+simulated_num_correct = right/num_observations
+simulated_num_correct
+0.5169811320754717
+check('tests/q11.py')
+All tests passed!
+
+Question 12: In the markdown cell below, compare the results of your simulation in question 11 and the actual number of correctly identified spring onsets by the groundhogs in the study. Does the Groundhog have true insights into the upcoming weather and timing of Spring or would a coin toss at the 50 yard line of the field at the Linc do just as well at predicting Spring's onset?
+
+The groundhog does not have true insights into the upcoming weather and timing of Spring because 52% of the time it is correct. The coin toss would do just as well at predicting Spring's onset.
+
+# For your convenience, you can run this cell to run all the tests at once!
+import glob
+from gofer.ok import check
+correct = 0
+total = 11
+for x in range(1, total+1):
+    print('Testing question {}: '.format(str(x)))
+    g = check('tests/q{}.py'.format(str(x)))
+    if g.grade == 1.0:
+        print("Passed")
+        correct += 1
+    else:
+        print('Failed')
+        display(g)
+
+print('Grade:  {}'.format(str(correct/total)))
+Testing question 1: 
+Passed
+Testing question 2: 
+Passed
+Testing question 3: 
+Passed
+Testing question 4: 
+Passed
+Testing question 5: 
+Passed
+Testing question 6: 
+Passed
+Testing question 7: 
+Passed
+Testing question 8: 
+Passed
+Testing question 9: 
+Passed
+Testing question 10: 
+Passed
+Testing question 11: 
+Passed
+Grade:  1.0
+print(name," Great work!")
+Hannah  Great work!
