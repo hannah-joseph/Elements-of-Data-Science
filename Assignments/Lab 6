@@ -1,0 +1,503 @@
+Lab 6: Simulation
+Elements of Data Science
+Welcome to Module 2 and lab 6! This week, we will go over conditionals and iteration, and introduce the concept of randomness. All of this material is covered in Chapter 9 and Chapter 10 of the online Inferential Thinking textbook.
+
+First, set up the tests and imports by running the cell below.
+
+name = "Hannah"
+name
+'Hannah'
+## import statements
+from gofer.ok import check
+import numpy as np
+from datascience import *
+import matplotlib
+%matplotlib inline
+import matplotlib.pyplot as plt
+plt.style.use('fivethirtyeight')
+# Fix for datascience plots
+import collections as collections
+import collections.abc as abc
+collections.Iterable = abc.Iterable
+1. Sampling
+1.1 Dungeons and Dragons and Sampling
+In the game Dungeons & Dragons, each player plays the role of a fantasy character. A player performs actions by rolling a 20-sided die, adding a "modifier" number to the roll, and comparing the total to a threshold for success. The modifier depends on her character's competence in performing the action. For example, suppose Alice's character, a barbarian warrior named Roga, is trying to knock down a heavy door. She rolls a 20-sided die, adds a modifier of 11 to the result (because her character is good at knocking down doors), and succeeds if the total is greater than 15.
+A Medium posting discusses probability in the context of Dungeons and Dragons https://towardsdatascience.com/understanding-probability-theory-with-dungeons-and-dragons-a36bc69aec88
+
+
+Question 1.1 Write code that simulates that procedure. Compute three values: the result of Alice's roll (roll_result), the result of her roll plus Roga's modifier (modified_result), and a boolean value indicating whether the action succeeded (action_succeeded). Do not fill in any of the results manually; the entire simulation should happen in code. Hint: A roll of a 20-sided die is a number chosen uniformly from the array make_array(1, 2, 3, 4, ..., 20). So a roll of a 20-sided die plus 11 is a number chosen uniformly from that array, plus 11.
+
+possible_rolls = make_array(1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20)
+roll_result = np.random.choice(possible_rolls)
+modified_result = roll_result+ 11
+action_succeeded = modified_result > 15
+
+# The next line just prints out your results in a nice way
+# once you're done.  You can delete it if you want.
+print("On a modified roll of {:d}, Alice's action {}.".format(modified_result, "succeeded" if action_succeeded else "failed"))
+On a modified roll of 16, Alice's action succeeded.
+check('tests/q1.1.py')
+All tests passed!
+
+Question 1.2 Run your cell 7 times to manually estimate the chance that Alice succeeds at this action. (Don't use math or an extended simulation.). Your answer should be a fraction.
+
+rough_success_chance = 5/7
+check('tests/q1.2.py')
+All tests passed!
+
+Suppose we don't know that Roga has a modifier of 11 for this action. Instead, we observe the modified roll (that is, the die roll plus the modifier of 11) from each of 7 of her attempts to knock down doors. We would like to estimate her modifier from these 7 numbers.
+
+Question 1.3 Write a Python function called simulate_observations. It should take two arguments, the modifier and num_oobservations, and it should return an array of num_observations. Each of the numbers should be the modified roll from one simulation. Then, call your function once to compute an array of 7 simulated modified rolls. Name that array observations.
+
+modifier = 11
+num_observations = 7
+
+def simulate_observations(modifier, num_observations):
+    """Produces an array of 7 simulated modified die rolls"""
+    observations = make_array()
+    for n in np.arange(num_observations):
+        observations = np.append(observations,(np.random.choice(possible_rolls) + modifier))
+    return observations
+    
+observations = simulate_observations(modifier,num_observations)
+observations
+array([ 12.,  12.,  17.,  27.,  24.,  16.,  31.])
+check('tests/q1.3.py')
+All tests passed!
+
+Question 1.4 Draw a histogram to display the probability distribution of the modified rolls we might see. Check with a neighbor or a CA to make sure you have the right histogram. Carry this out again using 100 rolls.
+
+# We suggest using these bins.
+roll_bins = np.arange(1, modifier+2+20, 1)
+modified_rolls = Table().with_columns("Probability Distribution",simulate_observations(modifier,100))
+modified_rolls
+modified_rolls.hist(bins = roll_bins)
+
+Estimate the modifier
+Now let's imagine we don't know the modifier and try to estimate it from observations. One straightforward (but clearly suboptimal) way to do that is to find the smallest total roll, since the smallest roll on a 20-sided die is 1, which is roughly 0. Use a random number for modifier to start and keep this value through the next questions. We will also generate 100 rolls based on the below unknown modifier.
+Question 1.5 Using that method, estimate modifier from observations. Name your estimate min_estimate.
+
+modifier = np.random.randint(1,20) # Generates a random integer modifier from 1 to 20 inclusive
+num_observations = 100
+observations = simulate_observations(modifier, num_observations)
+observations
+min_estimate = min(observations)-1
+min_estimate
+10.0
+check('tests/q1.5.py')
+All tests passed!
+
+Estimate the modifier based on the mean of observations.
+Question 1.6 Figure out a good estimate based on that quantity. Then, write a function named mean_based_estimator that computes your estimate. It should take an array of modified rolls (like the array observations) as its argument and return an estimate (single number)of the modifier based on those numbers contianed in the array.
+
+def mean_based_estimator(obs):
+    """Estimate the roll modifier based on observed modified rolls in the array nums."""
+    mean_based_observations= np.mean(obs)
+    expected_roll = 10.5 
+    mean_based_estimate = mean_based_observations - expected_roll
+    return mean_based_estimate
+
+# Here is an example call to your function.  It computes an estimate
+# of the modifier from our  observations.
+observations = simulate_observations(modifier, 100)
+mean_based_estimate = mean_based_estimator(observations)
+print(mean_based_estimate)
+10.26
+check('tests/q1.6.py')
+All tests passed!
+
+Question 1.7 Construct a histogram and compare to above estimates, are they consistent? What is your best estimate of the random modifier based on the above, without examining the value?
+
+They are consistent because the estimated modifier of the graph is above 10 as it between 25 and 25.5. The estimated modifier, from above, is 10.26 which is relatively near the estimated value.
+
+plt.hist(modified_rolls, bins = roll_bins) # Use to plot histogram of an array of 100 modified rolls
+estimated_modifier = mean_based_estimate
+estimated_modifier
+10.260000000000002
+
+check('tests/q1.7.py')
+All tests passed!
+
+2. Sampling and GC content of DNA sequence
+DNA within a cell contains codes or sequences for the ultimate synthesis of proteins. In DNA is made up of four types of nucleotides, guanine (G), cytosine (C), adenine (A), and thymine (T) connected in an oredered sequence. These nucleotides on a single strand pair with complimentary nucleotides on a second strand, G pairs with C and A with T. Regions of DNA code for RNA which ultimately directs protein synthesis and these segments are known as genes and these segments often have higher GC content. Hear we will sample 10 nuclotide segments of a DNA sequence and determine the GC content of these DNA segments. See DNA sequnce basics and GC Content details.
+
+Our goal is to sample portions (10 nucelotides) of the sequence and determine the relative content of guanine (G) and cytosine (C) to adenine (A) and thymine (T)
+# DNA sequence we will examine, a string
+seq = "CGTAACAAGGTTTCCGTAGGTGAACCTGCGGAAGGATCATTGATGAGACCGTGGAATAAACGATCGAGTG \
+AATCCGGAGGACCGGTGTACTCAGCTCACCGGGGGCATTGCTCCCGTGGTGACCCTGATTTGTTGTTGGG \
+CCGCCTCGGGAGCGTCCATGGCGGGTTTGAACCTCTAGCCCGGCGCAGTTTGGGCGCCAAGCCATATGAA \
+AGCATCACCGGCGAATGGCATTGTCTTCCCCAAAACCCGGAGCGGCGGCGTGCTGTCGCGTGCCCAATGA \
+ATTTTGATGACTCTCGCAAACGGGAATCTTGGCTCTTTGCATCGGATGGAAGGACGCAGCGAAATGCGAT \
+AAGTGGTGTGAATTGCAAGATCCCGTGAACCATCGAGTCTTTTGAACGCAAGTTGCGCCCGAGGCCATCA \
+GGCTAAGGGCACGCCTGCTTGGGCGTCGCGCTTCGTCTCTCTCCTGCCAATGCTTGCCCGGCATACAGCC \
+AGGCCGGCGTGGTGCGGATGTGAAAGATTGGCCCCTTGTGCCTAGGTGCGGCGGGTCCAAGAGCTGGTGT \
+TTTGATGGCCCGGAACCCGGCAAGAGGTGGACGGATGCTGGCAGCAGCTGCCGTGCGAATCCCCCATGTT \
+GTCGTGCTTGTCGGACAGGCAGGAGAACCCTTCCGAACCCCAATGGAGGGCGGTTGACCGCCATTCGGAT \
+GTGACCCCAGGTCAGGCGGGGGCACCCGCTGAGTTTACGC" # LCBO-Prolactin precursor-Bovine
+seq
+'CGTAACAAGGTTTCCGTAGGTGAACCTGCGGAAGGATCATTGATGAGACCGTGGAATAAACGATCGAGTG AATCCGGAGGACCGGTGTACTCAGCTCACCGGGGGCATTGCTCCCGTGGTGACCCTGATTTGTTGTTGGG CCGCCTCGGGAGCGTCCATGGCGGGTTTGAACCTCTAGCCCGGCGCAGTTTGGGCGCCAAGCCATATGAA AGCATCACCGGCGAATGGCATTGTCTTCCCCAAAACCCGGAGCGGCGGCGTGCTGTCGCGTGCCCAATGA ATTTTGATGACTCTCGCAAACGGGAATCTTGGCTCTTTGCATCGGATGGAAGGACGCAGCGAAATGCGAT AAGTGGTGTGAATTGCAAGATCCCGTGAACCATCGAGTCTTTTGAACGCAAGTTGCGCCCGAGGCCATCA GGCTAAGGGCACGCCTGCTTGGGCGTCGCGCTTCGTCTCTCTCCTGCCAATGCTTGCCCGGCATACAGCC AGGCCGGCGTGGTGCGGATGTGAAAGATTGGCCCCTTGTGCCTAGGTGCGGCGGGTCCAAGAGCTGGTGT TTTGATGGCCCGGAACCCGGCAAGAGGTGGACGGATGCTGGCAGCAGCTGCCGTGCGAATCCCCCATGTT GTCGTGCTTGTCGGACAGGCAGGAGAACCCTTCCGAACCCCAATGGAGGGCGGTTGACCGCCATTCGGAT GTGACCCCAGGTCAGGCGGGGGCACCCGCTGAGTTTACGC'
+Question 2.1A Run the first two code cells below to see how substrings are extracted and how a character can be counted within a substring. Use the same strategy to determine GC content as fraction of the total in the first 10 nucleotides in the larger sequence above, seq
+
+# Example A
+samplesize = 4
+# Use this short sequence in this example
+seq0 = 'GTGAAAGATT'
+# How to get a substring
+seq0[0:samplesize]
+'GTGA'
+# Example B
+# How to count the number of times 'A' appears in sequence
+seq0[0:samplesize].count('A')
+1
+GCcount = seq[0:10].count('G') + seq[0:10].count('C')
+GCcount
+GCfraction = GCcount/10
+GCfraction
+0.5
+Lists
+Below we assemble a list and append an additional entry, 0.7. A useful strategy in creating your function
+
+gc = []
+gc.append(0.8)
+gc.append(0.7)
+gc
+[0.8, 0.7]
+Fill a list with 30 random G, C, T, A nucleotides
+use iteration and np.random.choice
+
+my_sim_seq = []
+nucleo = ['G','C','T','A']
+for i in np.arange(30):
+    my_sim_seq.append(np.random.choice(nucleo))
+
+print(my_sim_seq)   
+['G', 'G', 'T', 'A', 'A', 'G', 'T', 'G', 'G', 'A', 'A', 'G', 'T', 'G', 'C', 'C', 'T', 'G', 'C', 'A', 'A', 'A', 'A', 'A', 'C', 'C', 'A', 'A', 'C', 'C']
+Question 2.1B We will define a function, calcGC to do the repetitive work of computing GC content fraction for each segment (samplesize) and return a list with the fraction GC for each samplesize segment.
+
+def calcGC(seq, samplesize):
+    gc = []
+    for i in range(len(seq)-samplesize):
+        GCcount = seq[i:i+samplesize].count('G') + seq[i:i+samplesize].count('C')
+        GCfraction = GCcount/samplesize
+        gc.append(GCfraction)
+    return gc
+check('tests/q2.1.py')
+All tests passed!
+
+Question 2.2 Apply this function to our sequence above seq with a samplesize of 10. What is the maximum, minimum, mean, and median? (Hint: the max of a list can be obtained with the max(results) and we can use np.mean(results)). Plot the results by using plt.plot(results).
+
+samplesize = 10
+results = calcGC(seq,samplesize)
+maximum = max(results)
+print(maximum)
+minimum = min(results)
+print(minimum)
+median = np.median(results)
+print(median)
+mean = np.mean(results)
+print(mean)
+
+plt.plot(results)
+0.9
+0.1
+0.6
+0.588783783784
+[<matplotlib.lines.Line2D at 0x7f64896ba440>]
+
+check('tests/q2.2.py')
+All tests passed!
+
+Question 2.3 Now apply this function to our sequence above seq with a different, larger samplesize (>30) of your choosing and plot. What do you observed with the different sampling? What is the maximum, minimum, mean, and median? (Hint: the max of a list can be obtained with the max(results) and we can use np.median(results))
+
+# Plot
+samplesize = 60
+diffresults = calcGC(seq,samplesize)
+maximum = max(diffresults)
+print(maximum)
+minimum = min(diffresults)
+print(minimum)
+median = np.median(diffresults)
+print(median)
+mean = np.mean(diffresults)
+print(mean)
+
+plt.plot(diffresults)
+0.7
+0.43333333333333335
+0.6
+0.588623188406
+[<matplotlib.lines.Line2D at 0x7f64885472e0>]
+
+Answer
+When comparing the two graphs, I noticed that the second graph is less condensed than the first one. The lowest point for graph 1 is at 0.1 around 299-300. For the second graph, the lowest points are below 0.45 around 299-300 and around 350.
+
+3. Wordle and sampling
+Inspired by Medium post: https://ericlani.medium.com/determining-the-best-first-wordle-word-to-guess-using-data-b93b975a6294
+
+Letter frequency in sampled texts
+We will begin our study by trying to understand the frequency of certain letters by sampling texts. We will again use Charles Darwin's book on the Origin of Species to examine the frequency of letters in this text. To do this we will need to write a function which goes through all the words and determines the counts of letters.
+
+darwin_string = open('data/darwin_origin_species.txt', encoding='utf-8').read()
+darwin_words = np.array(darwin_string.split())
+darwin_words
+array(['On', 'the', 'Origin', ..., 'stripes', 'on,', '163.'],
+      dtype='<U46')
+Question 3.1 Define a function to determine letter frequency in text with words split in an array as in above darwin_words array and return a Table with letters and their count. We will use a nice trick with a Python dictionary (see: Python Dictionaries) as already encoded below.
+
+def letter_freq(words):
+    f = {} # Create an empty dictionary to store letters and their count found in words
+    for word in words:
+        for l in word:
+            l = l.lower()
+            if l.isalpha(): # avoid punctuation
+                f[l] = f.get(l,0) + 1 # Using Python dictionary
+    return Table().with_columns('letters',list(f.keys()),'count',list(f.values()))
+table = letter_freq(darwin_words)
+print(table)
+letters | count
+o       | 54301
+n       | 54211
+t       | 67404
+h       | 36780
+e       | 99693
+r       | 47137
+i       | 55682
+g       | 13650
+f       | 21109
+s       | 50943
+... (21 rows omitted)
+Now test your function with your own sentence.
+
+sentence = "Hi, my name is Hannah"
+letter_freq(sentence)
+letters	count
+h	3
+i	2
+m	2
+y	1
+n	3
+a	3
+e	1
+s	1
+check('tests/q3.1.py')
+All tests passed!
+
+Question 3.2 Apply the function to the darwin_string and examine the output. How many total letters in the text (Hint: use np.sum(freq.column('count')))? Now compute a new column, frequency which contains the fraction of each letter. What are the two most frequent letters in this sample?
+
+Two most frequent letters are 'E' and 'T'.
+
+freq = letter_freq(darwin_words).sort("letters")
+
+total_letters = np.sum(freq.column('count')) # How many letters
+
+freq = freq.with_columns("frequency", freq.column("count")/total_letters).sort("frequency",descending=True)
+freq
+letters	count	frequency
+e	99693	0.132864
+t	67404	0.0898312
+a	59475	0.079264
+i	55682	0.0742089
+o	54301	0.0723684
+n	54211	0.0722485
+s	50943	0.0678931
+r	47137	0.0628208
+h	36780	0.0490177
+l	31310	0.0417277
+... (21 rows omitted)
+
+check('tests/q3.2.py')
+All tests passed!
+
+Five letter words
+Question 3.3 Now look at a list of 5 letter words assembled by Professor Emeritas Donald Knuth of Stanford. Use your function to determine the letter frequency and compare to above.
+
+from urllib.request import urlopen # Needed to read from internet
+
+url = "https://www-cs-faculty.stanford.edu/~knuth/sgb-words.txt"
+knuth5_string=urlopen(url).read().decode('utf-8') 
+knuth_words = np.array(knuth5_string.split())
+# Now apply your function and compute letter frequencies
+freq = letter_freq(knuth_words).sort("letters")
+
+total_letters = np.sum(freq.column('count'))
+
+freq = freq.with_columns("frequency", freq.column("count")/total_letters).sort("frequency",descending=True)
+freq
+letters	count	frequency
+s	3033	0.105367
+e	3009	0.104534
+a	2348	0.0815703
+o	1915	0.0665277
+r	1910	0.066354
+i	1592	0.0553066
+l	1586	0.0550981
+t	1585	0.0550634
+n	1285	0.0446413
+d	1181	0.0410283
+... (16 rows omitted)
+
+check('tests/q3.3.py')
+All tests passed!
+
+Compare with Oxford Dictionary
+Based on analysis of Oxford dictionary these are the letter frequencies from the dictionary. Compare the three, in the markdown below, what are the similarities?
+
+url = "data/Oxford_Letter_frequency.csv"
+letters = Table().read_table(url, header=None, names=["letters","frequency","count"])
+letters
+letters	frequency	count
+e	0.111607	56.88
+a	0.084966	43.31
+r	0.075809	38.64
+i	0.075448	38.45
+o	0.071635	36.51
+t	0.069509	35.43
+n	0.066544	33.92
+s	0.057351	29.23
+l	0.054893	27.98
+c	0.045388	23.13
+... (16 rows omitted)
+
+Comparsion
+When comparing Darwin's Origin of Species, Oxford Dictionary, and Knuth's 5-letter words, the most frequent letter was 'E' for Darwin's Orgin of Species, 'S' for Knuth's 5-letter words, and 'E' for Oxford Dictionry. For Darwin's Origin of Species and Oxford Dictionary, the most used letter was 'E' and the second most used letter for Knuth's was E as well.
+
+Question 3.4 Let's look at 5-letter words and the frequency of each letter and compare with Oxford case
+
+Wordle itself
+The New York Times hosts Wordle where a 5 letter word (Wordle) is determined in six or fewer tries using clues about letters contained and letter position. We will use our new knowledge of letter frequency and Knuth's 5 letter words to come up with best letters and words to try.
+
+# Reload Knuth's words in more convenient pandas format
+url = "https://www-cs-faculty.stanford.edu/~knuth/sgb-words.txt"
+# Better to read with pandas
+import pandas as pd
+words_df = pd.read_csv(url, header=None, names=["Words","value","letters"])  
+Now load our letter frequency, freq, data table from a chosen text and convert to pandas dataframe.
+
+letters_df = freq.to_df() # Select table from each text above
+letters_df 
+letters	count	frequency
+0	s	3033	0.105367
+1	e	3009	0.104534
+2	a	2348	0.081570
+3	o	1915	0.066528
+4	r	1910	0.066354
+5	i	1592	0.055307
+6	l	1586	0.055098
+7	t	1585	0.055063
+8	n	1285	0.044641
+9	d	1181	0.041028
+10	u	1089	0.037832
+11	c	964	0.033490
+12	p	955	0.033177
+13	y	886	0.030780
+14	m	843	0.029286
+15	h	814	0.028279
+16	b	715	0.024839
+17	g	679	0.023589
+18	k	596	0.020705
+19	f	561	0.019489
+20	w	505	0.017544
+21	v	318	0.011047
+22	x	139	0.004829
+23	z	135	0.004690
+24	j	89	0.003092
+25	q	53	0.001841
+Question 3.5 Devise a plan to use the collection of letter frequencies and Knuth's five letter words to order the best words to guess for Wordle? Higher letter frequency means more words with the given letter. Describe plan in text markdown only.
+
+First, we would need to compute the letter frequency of the five letter words using the letter_freq function. Then, we need to compute the score as the sum of the frequency of each of its letters, using the np.sum function of the number of times the letter is used and then by dividing by the total number of letters in the collection. Then, we would take the highest frequency of given letter and try to guess the best words for Wordle.
+"Magic" Wordle computation
+Takes a while, be patient. Can you interpret how this code is sorting Knuth's words based on our letter frequencies? I infer that the code below is using the letter frequency function but combining the letters into frequently used words. It is forming a table and counting the frequency where a person would get 4 out of the 5 letters. The table below removed the words that have 4.0 under the "letters" column.
+
+for index, row in words_df.iterrows():
+    prob = 0
+    letter_set = set()
+    for ele in row['Words']:
+        letter_set.add(ele)
+        temp_df = letters_df[letters_df["frequency"].where(letters_df["letters"] == ele).notnull()]
+        temp_df
+        prob += temp_df["frequency"].iloc[0]
+        words_df.loc[index, ["value"]] = prob
+        words_df.loc[index, ["letters"]] = len(letter_set)
+        
+words_df       
+Words	value	letters
+0	which	0.162897	4.0
+1	there	0.358763	4.0
+2	their	0.309536	5.0
+3	about	0.265833	5.0
+4	would	0.218030	5.0
+...	...	...	...
+5752	osier	0.398089	5.0
+5753	roble	0.317353	5.0
+5754	rumba	0.239882	5.0
+5755	biffy	0.149904	4.0
+5756	pupal	0.240855	4.0
+5757 rows × 3 columns
+
+Four letter words are included now we will select only five letter words.
+
+words_df.where(words_df["letters"]==5.0).sort_values(by='value',ascending=False).dropna()
+Words	value	letters
+697	arose	0.424353	5.0
+329	raise	0.413132	5.0
+772	arise	0.413132	5.0
+3522	aloes	0.413097	5.0
+5043	stoae	0.413062	5.0
+...	...	...	...
+4681	humpf	0.148063	5.0
+5180	mujik	0.146222	5.0
+4949	whump	0.146118	5.0
+3006	junky	0.137051	5.0
+2214	jumpy	0.134167	5.0
+3834 rows × 3 columns
+
+Question 3.6
+
+Compare top word given based on Darwin's text, Knuth's letter frequency, and the Oxford Dictionary.
+Top words for Wordle: The top words are arose, raise, and arise. It is consistent with the letter frequency because the tops words have 'S' and 'E' but the top word has an 'A'. Additionally the top word is mostly comprised of vowels except for 'R' and 'E'.
+
+Complete and tally your score.
+Submit .html and .ipynb of completed laboratory
+
+# For your convenience, you can run this cell to run all the tests at once!
+import glob
+from gofer.ok import check
+correct = 0
+total = 11
+checks = ['1.1','1.2', '1.3', '1.5', '1.6', '1.7', '2.1', '2.2', '3.1', '3.2','3.3']
+for x in checks:
+    print('Testing question {}: '.format(x))
+    g = check('tests/q{}.py'.format(x))
+    if g.grade == 1.0:
+        print("Passed")
+        correct += 1
+    else:
+        print('Failed')
+        display(g)
+
+print('Grade:  {}'.format(str(correct/total)))
+Testing question 1.1: 
+Passed
+Testing question 1.2: 
+Passed
+Testing question 1.3: 
+Passed
+Testing question 1.5: 
+Passed
+Testing question 1.6: 
+Passed
+Testing question 1.7: 
+Passed
+Testing question 2.1: 
+Passed
+Testing question 2.2: 
+Passed
+Testing question 3.1: 
+Passed
+Testing question 3.2: 
+Passed
+Testing question 3.3: 
+Passed
+Grade:  1.0
+print(name," Great work!")
+Hannah  Great work!
