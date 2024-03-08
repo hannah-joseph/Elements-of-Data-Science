@@ -1,0 +1,1265 @@
+
+Machine Learning and prediction
+
+Elements of Data Science
+In this laboratory we will use training data to predict outcomes. We will first test these ideas using our Old Faithful data again. Next we will look at data on the iris flower to classify iris' based on sepal width and length. In our culminating activity we will predict molecular acidity using data computed by Prof. Vince Voelz in the Temple Chemistry department and a graduate student, Robert Raddi. See their paper: Stacking Gaussian processes to improve pKa predictions in the SAMPL7 challenge.
+
+Your_name = "Hannah Joseph"
+Your_name
+
+'Hannah Joseph'
+
+Learning from training data
+
+A key concept in machine learning is using a subset of a dataset to train an algorithm to make estimates on a separate set of test data. The quality of the machine learning and algorithm can be assesed based on the accuracy of the predictions made on test data. Many times there are also parameters sometimes termed hyper-parameters which can be optimized through an iterative approach on test or validation data. In practice a dataset is randomly split into training and test sets using sampling.
+k nearest neighbor
+
+We will examine one machine learning algorithm in the laboratory, k nearest neighbor. Many of the concepts are applicable to the broad range of machine learning algorithms available.
+
+## import statements
+# These lines load the tests. 
+from gofer.ok import check
+
+import numpy as np
+from datascience import *
+import pandas as pd
+import matplotlib
+%matplotlib inline
+import matplotlib.pyplot as plt
+plt.style.use('ggplot')
+import warnings
+warnings.simplefilter('ignore', UserWarning)
+#from IPython.display import Image
+from matplotlib.colors import ListedColormap
+from sklearn import neighbors, datasets
+# Fix for datascience collections Iterable
+import collections as collections
+import collections.abc as abc
+collections.Iterable = abc.Iterable
+!pip install jupyterquiz
+from jupyterquiz import display_quiz
+import json
+from IPython.core.display import HTML
+
+Requirement already satisfied: jupyterquiz in /opt/conda/lib/python3.10/site-packages (2.1.5)
+
+k nearest neighbor regression
+
+We will use the k nearest neighbor algorithm to make predictions of wait time in minutes following an eruption duration ofa given number of minutes (independent variable).
+
+faithful = Table.read_table("data/faithful.csv")
+faithful.scatter(0, 1, fit_line=True)
+
+Question 1
+
+Use the datascience .split(n) Table method to split the dataset into 80% training and 20% test. The argument for .split(n) method,n, needs to be an integer. See datascience documentation
+
+trainf, testf = faithful.split(int(faithful.num_rows*0.8))
+print(trainf.num_rows, 'training and', testf.num_rows, 'test instances.')
+
+217 training and 55 test instances.
+
+check('tests/q1.py')
+
+All tests passed!
+Nearest neighbor concept
+
+The training examines the chreacteristics of k nearest neighbors to the data point for which a prediction will be made. Nearness is measured using several different metrics with Euclidean distance being a common one for numerical attributes.
+Euclidean distance:
+1-D d(p,q)=√(p−q)2
+
+2-D d(p,q)=√(p1−q1)2+(p2−q2)2
+
+For multiple points (rows): 2-D d(p,q)=∑√((p1−q1)2+(p2−q2)2
+
+Try different attribute values in the following 2D Euclidean distance example code below to get a feel for the computation
+
+# Example code to compute an Euclidean distance between two 2-D points
+d_p_q = np.sqrt(sum((make_array(2,3)-make_array(4,3))**2))
+d_p_q
+
+2.0
+
+To get values from Table row as an array as is done in row_distance. Note in the faithful data case we will only consider the duration column in nearest neighbor computation but in examples below we will use a 2-D array of attributes with the iris data and a 10-D array in the chemistry and molecular acidity case.
+
+f_array = np.array(faithful.row(0))
+f_array
+
+array([  3.6,  79. ])
+
+A couple quick review questions about nearest neighbor below, select the best answer (multiple tries ok). Execute the below cell to reveal the self-check quiz.
+
+with open("questions.json", "r") as file:
+    questions=json.load(file)    
+display_quiz(questions)
+
+What does nearest neighbor mean in the context of a a training data set?
+The rows/observations appear closest in the data set
+Nearest neighbors always have the same predicted value
+The rows/observations which are closest in terms of values of attributes
+What does the k stand for in k nearest neighbors?
+k is only part of the name of the method
+k is the number of neighbors to consider once sort to find the closest rows/observations in the test data set.
+k is part of the expression ok representing a good method
+Why do we split or data into a training and test set? (Select all that are correct)
+The test data set is used to test the accuracy of the trained model.
+The training set is for the machine learning algorithm to learn from
+The training and test data sets are used the same exact way in machine learning.
+Question 2
+
+Define a function which is the Euclidean distance between two values. Use the last two example code cells above as inspiration. This is where we will compute the distance between two duration values.
+
+def distance(pt1, pt2):
+    """The distance between two points, represented as arrays."""
+    return  np.sqrt(np.sum((pt1 - pt2)**2))
+
+check('tests/q2.py')
+
+All tests passed!
+Rest of the nearest neighbor algorithm
+
+Execute these cells to create the complete algorithm
+
+def row_distance(row1, row2):
+    """The distance between two rows of a table."""
+    return distance(np.array(row1), np.array(row2)) # Need to convert rows into arrays
+
+def distances(training, example, output):
+    """Compute the distance from example for each row in training."""
+    dists = []
+    attributes = training.drop(output)
+    for row in attributes.rows:
+        dists.append(row_distance(row, example))
+    return training.with_column('Distance', dists)
+
+def closest(training, example, k, output):
+    """Return a table of the k closest neighbors to example."""
+    return distances(training, example, output).sort('Distance').take(np.arange(k))
+
+Question 3
+
+Take an example row from the test data (testf), drop the prediction column and use the closest function to see the top 10 closest points to the target in the training data.
+
+example_row = testf.drop("predict").row(2)
+example_row   # This should display data contained in selected row in testf table.
+
+Row(duration=1.9670000000000001, wait=55.0)
+
+k = 10 # Number of nearest neighbors
+closest(testf, example_row , k,'wait')
+
+duration 	wait 	Distance
+5.1 	96 	49.9983
+5.033 	77 	50.061
+4.933 	88 	50.1548
+4.833 	80 	50.2488
+4.7 	80 	50.3742
+4.7 	78 	50.3742
+4.667 	84 	50.4054
+4.65 	90 	50.4214
+4.633 	80 	50.4375
+4.6 	88 	50.4687
+
+check('tests/q3.py')
+
+All tests passed!
+Question 4
+
+Predict the value for this row using the defined predict_nn function below and compare to the value reported for wait in the test data. How do they compare?
+
+def predict_nn(example):
+    """Return the majority class among the k nearest neighbors."""
+    k = 15
+    return np.average(closest(trainf, example, k , 'wait').column('wait'))
+predict_nn(example_row)
+
+82.86666666666666
+
+predictionf = 82.6  # This is the value predicted for wait using the average of the k nearest neighbors in the test set
+actual = 76
+print(predictionf,actual)
+
+82.6 76
+
+The predicted value is greater than the actual.
+
+check('tests/q4.py')
+
+All tests passed!
+Question 5 Predictions
+
+Now we will make predictions for the whole data set using the apply Table method. We will then look at the root mean squared error (RMSE) for the nearest neighbor fit and a scatter plot. Try adjusting the value of k in the predict_nn function to see it's effect on the quality of fit by rerunning these cells. Are the predicted points in a perfect straight line, why or why not?
+
+testf = testf.with_columns("predict",testf.apply(predict_nn,"duration"))
+nn_test_predictions = testf.column("predict")
+test_wait = testf.column("wait")
+rmse_nn = np.mean((test_wait - nn_test_predictions) ** 2) ** 0.5
+
+print('Test set RMSE for nearest neighbor regression:', round(rmse_nn,2))
+
+Test set RMSE for nearest neighbor regression: 5.92
+
+testf.scatter("duration")
+
+The predicted points are not exactly in a straight perfect line, but it is more linear than the wait column.
+Classify iris data with machine learning
+
+Next we will take on the problem of classifying iris data into three categories, setosa, versicolor, and virginica. Here we will also learn the basics of the k nearest neighbor algorithm.
+
+The first data set we will look at consists of 50 samples from three species of Iris (Iris Setosa, Iris virginica, and Iris versicolor). Four features were measured including the length and the width of the sepals and petals, in centimeters for each observation.
+
+Iris stainglass, J.R. Smith
+
+n_neighbors = 15
+# Load iris data
+iris = datasets.load_iris()
+# We only take the first two features. 
+iris_table = Table().with_columns("Name",iris.target,iris.feature_names[0],iris.data[:,0],iris.feature_names[1],iris.data[:,1])
+iris_table
+
+Name 	sepal length (cm) 	sepal width (cm)
+0 	5.1 	3.5
+0 	4.9 	3
+0 	4.7 	3.2
+0 	4.6 	3.1
+0 	5 	3.6
+0 	5.4 	3.9
+0 	4.6 	3.4
+0 	5 	3.4
+0 	4.4 	2.9
+0 	4.9 	3.1
+
+... (140 rows omitted)
+
+iris.target_names
+
+array(['setosa', 'versicolor', 'virginica'],
+      dtype='<U10')
+
+Question 6
+
+Train and test split the iris_table @ 80% as above.
+
+train_i, test_i = iris_table.split(int(iris_table.num_rows*0.8))
+print(train_i.num_rows, 'training and', test_i.num_rows, 'test instances.')
+
+120 training and 30 test instances.
+
+check('tests/q6.py')
+
+All tests passed!
+Question 7
+
+With classification we need to use training data to decide how to classify data given a set of attributes, sepal length and sepal width in this case. Create a function which returns the majority classification among three possibilities in "Name" coded as 0, 1, 2 (setosa, versicolor, and virginica respectively). The and below combines two conditionals. For example, (twos > ones) and ...
+
+def majority(topkclasses):
+    twos = topkclasses.where('Name', are.equal_to(2)).num_rows
+    ones = topkclasses.where('Name', are.equal_to(1)).num_rows
+    zeros = topkclasses.where('Name', are.equal_to(0)).num_rows
+    # Now test to see what the majority name for each k class
+    if (twos > ones) and (twos > zeros):
+        return 2
+    elif (ones > twos) and (ones > zeros):
+        return 1
+    else:
+        return 0
+
+check('tests/q7.py')
+
+All tests passed!
+
+def classify(training, new_point, k):
+    closestk = closest(training, new_point, k,"Name")
+    topkclasses = closestk.select('Name')
+    return majority(topkclasses)
+
+test_row = 21
+print("Prediction: ",classify(train_i,example_row,test_row)," Actual: ",test_i.select("Name").row(test_row))
+
+Prediction:  0  Actual:  Row(Name=0)
+
+def predict(train, test_attributes, k):
+    pred = []
+    for i in np.arange(test_attributes.num_rows):
+        pred.append(classify(train,test_attributes.row(i),k))
+    return pred
+
+Question 8
+
+Make a new table called prediction which includes original columns of test Table but also includes a "predict" column.
+
+k = 15
+prediction = test_i.with_columns("predict", predict(train_i, test_i.drop("Name"), k))
+prediction.show(30)
+
+Name 	sepal length (cm) 	sepal width (cm) 	predict
+1 	5.4 	3 	1
+0 	4.4 	3 	0
+2 	5.7 	2.5 	1
+1 	6 	2.9 	1
+0 	4.8 	3.4 	0
+2 	6.3 	3.3 	2
+2 	6.3 	2.5 	1
+0 	5.5 	4.2 	0
+1 	6.1 	2.9 	2
+1 	5.6 	3 	1
+2 	6.3 	2.8 	2
+1 	6.1 	3 	2
+0 	5.3 	3.7 	0
+2 	6.1 	3 	2
+0 	4.8 	3 	0
+1 	6.1 	2.8 	2
+0 	5.1 	3.8 	0
+1 	5.9 	3.2 	1
+2 	7.3 	2.9 	2
+2 	6.4 	2.8 	2
+1 	6.7 	3 	2
+0 	5.7 	4.4 	0
+0 	5.1 	3.8 	0
+2 	5.9 	3 	1
+0 	4.6 	3.6 	0
+0 	5.4 	3.9 	0
+2 	6.4 	2.7 	2
+1 	5 	2 	1
+1 	6.7 	3.1 	2
+2 	7.9 	3.8 	2
+
+check('tests/q8.py')
+
+All tests passed!
+Plot decision outcomes for test set
+Question 9
+
+Use above prediction Table to make a scatter plot of the color coded predictions based on the tweo attributes(use colors="predict" in scatter plot after specifying x and y axis based on attributes).
+
+prediction.drop("Name").scatter("sepal length (cm)", "sepal width (cm)", group= "predict")
+
+Fancy plot showing color coded decision boundaries
+
+We can make a more informative plot by predicting on a grid of attribute values as shown below. Seaborn is an add-on to the Matplotlib plotting we have been using which provides more control of plotting. Execute (this may take a minute+) and study the below input and resulting output for your information.
+
+def make_colors(iris, y, cmap):
+    colors = []
+    cdict = {'setosa':0, 'virginica':2, 'versicolor':1}
+    for x in iris.target_names[y]:
+        colors.append(cmap[cdict[x]])
+    return colors
+
+import seaborn as sns
+# Plot the decision boundary. For that, we will assign a color to each
+# point in the mesh [x_min, x_max]x[y_min, y_max].
+h = .1  # step size in the mesh
+k = 10
+x_min, x_max = iris.data[:, 0].min() - 1, iris.data[:, 0].max() + 1
+y_min, y_max = iris.data[:, 1].min() - 1, iris.data[:, 1].max() + 1
+xx, yy = np.meshgrid(np.arange(x_min, x_max, h),
+                         np.arange(y_min, y_max, h))
+## Create a grid of predictions in a Table
+attribute_grid = Table().with_columns(iris.feature_names[0],np.c_[xx.ravel(), yy.ravel()][:,0],iris.feature_names[1],np.c_[xx.ravel(), yy.ravel()][:,1])
+
+Z = np.array(predict(train_i,attribute_grid,k))
+
+# Create color maps
+cmap_light = ListedColormap(['orange', 'cyan', 'cornflowerblue'])
+cmap_bold = ['darkorange', 'c', 'darkblue']
+# Put the result into a color plot
+Z = Z.reshape(xx.shape)
+plt.figure(figsize=(8, 6))
+plt.contourf(xx, yy, Z, cmap=cmap_light)
+
+# Plot the test points but convert to numpy arrays
+predictions = prediction.column('predict')
+attribute1 = prediction.column(1)
+attribute2 = prediction.column(2)
+plt.scatter(x=attribute1, y=attribute2, c = make_colors(iris, predictions, cmap_bold), alpha=1.0, edgecolor="black")
+
+plt.xlim(xx.min(), xx.max())
+plt.ylim(yy.min(), yy.max())
+plt.title("3-Class classification (k = %i')"
+              % (k))
+plt.xlabel(iris.feature_names[0])
+plt.ylabel(iris.feature_names[1])
+
+Text(0, 0.5, 'sepal width (cm)')
+
+Use scikit learn
+
+Scikit learn is a standard state of the art machine learning library. For demonstration purposes execute the below commands to classify and generate a comparable output.
+
+from sklearn.neighbors import KNeighborsRegressor
+from sklearn.metrics import mean_squared_error
+from sklearn.metrics import r2_score
+from sklearn.model_selection import train_test_split
+
+clf = neighbors.KNeighborsClassifier(k) # Initiate the classifier
+x_train, x_test, y_train, y_test = train_test_split(iris.data[:,:2], iris.target, random_state=22) #  scikit split
+# Now fit
+clf.fit(x_train, y_train)
+
+KNeighborsClassifier
+
+KNeighborsClassifier(n_neighbors=10)
+
+import seaborn as sns
+# Plot the decision boundary. For that, we will assign a color to each
+# point in the mesh [x_min, x_max]x[y_min, y_max].
+h = .1  # step size in the mesh
+x_min, x_max = iris.data[:, 0].min() - 1, iris.data[:, 0].max() + 1
+y_min, y_max = iris.data[:, 1].min() - 1, iris.data[:, 1].max() + 1
+xx, yy = np.meshgrid(np.arange(x_min, x_max, h),
+                         np.arange(y_min, y_max, h))
+Z = clf.predict(np.c_[xx.ravel(), yy.ravel()])
+# Create color maps
+cmap_light = ListedColormap(['orange', 'cyan', 'cornflowerblue'])
+cmap_bold = ['darkorange', 'c', 'darkblue']
+# Put the result into a color plot
+Z = Z.reshape(xx.shape)
+plt.figure(figsize=(8, 6))
+plt.contourf(xx, yy, Z, cmap=cmap_light)
+
+# Plot also the training points
+y = y_test
+plt.scatter(x=x_test[:, 0], y=x_test[:, 1], c = make_colors(iris, y, cmap_bold),
+                    alpha=1.0, edgecolor="black")
+plt.xlim(xx.min(), xx.max())
+plt.ylim(yy.min(), yy.max())
+plt.title("3-Class classification (k = %i')"
+              % (k))
+plt.xlabel(iris.feature_names[0])
+plt.ylabel(iris.feature_names[1])
+
+Text(0, 0.5, 'sepal width (cm)')
+
+Question 10
+
+Comment on the quality of the predictions by
+
+    Your nearest neighjbor algorithm
+    scikit learn
+    Comparison
+
+When using nearest neighbor algorithm, the predictions are not as accurate because it can be affected by outliers in the data. However, with scikit learning, the predictions are more accurate and visually you can see where the three areas connect and separate. Nearest neighbor algorithm is better used for small data sets while scikit learn is better used for large data sets.
+Molecules and predicting acidity measured by pKa
+
+Within the Jupyter notebook we can also analyze molecules and their molecular data using the library RDKit. RDKit adds the ability to visualize 2D and 3D molecular structures. We can apply many of the data science tools we have learned to molecular data as well.
+First we will briefly look at acid-base chemistry and how acidity is defined. pH is a measure of the acidity of a water-based (aqueous) solution. A pH of 1 is acidic, a pH of 7 is neutral and a pH of 14 is basic. Next we will use some computed atributes of a large set of molecules to train a k nearest neighbor model to predict acidity. We will use a range of attributes including the partial charges on atoms adjacent to the acidic proton, molecular weight, solvent accessible surface area (SASA), carbon-oxygen bond order, and some thermochemistry measures all of which may help predict acidity with a lower pKa indicating a stronger (weak) acid.
+Acid-base and pKa background
+
+A very brief background on acid - base equilibria demonstrated for glycine. See OpenStax Chemistry for details based on interest.
+
+RDKit
+
+RDKit is a specialized library to handle the complexities of molecules within Python.
+
+from rdkit import Chem
+from rdkit.Chem.Draw import IPythonConsole #Needed to show molecules
+from rdkit.Chem.Draw.MolDrawing import MolDrawing, DrawingOptions #Only needed if modifying defaults
+from rdkit.Chem import rdRGroupDecomposition
+from rdkit.Chem import rdDepictor
+from rdkit.Chem import PandasTools
+from rdkit.Chem import AllChem
+from rdkit.Chem import Draw
+from rdkit import DataStructs
+# Options
+DrawingOptions.bondLineWidth=1.8
+rd =True
+
+Load detailed molecular data for 2000 molecules
+
+url = "https://raw.githubusercontent.com/robraddi/GP-SAMPL7/main/pKaDatabase/OChem/ochem0-2000.csv"
+data = Table.read_table(url)
+data=data.sort('N')
+data.show(5)
+
+SMILES 	CASRN 	RECORDID 	MOLECULEID 	EXTERNALID 	N 	NAME 	NAME.1 	INTRODUCER 	MODIFIER 	ARTICLEID 	PUBMEDID 	PAGE 	TABLE 	pKa (smiles as ob. cond.) {measured} 	UNIT {pKa (smiles as ob. cond.)} 	pKa (smiles as ob. cond.) {measured, converted} 	UNIT {pKa (smiles as ob. cond.)}.1 	Temperature 	UNIT {Temperature} 	Ionizable centre (smiles) 	IC group given 	IC index predicted 	pKa predicted value 2 	UNIT {pKa predicted value 2} 	pKa predicted value 	UNIT {pKa predicted value} 	IC smiles given 	AtomNR of IC 	groupsAndICs 	COMMENTS 	INCHI_KEY
+[O-]C1=C2C=CC=CC2=NC=N1 	- 	R1207641 	M20829 	- 	- 	4-Hydroxyquinazoline 	- 	Koerner 	charochkina 	A5793 	- 	- 	- 	9.87 	Log unit 	9.87 	Log unit 	25 	?C 	[O-]c1ncnc2ccccc12 	2 	7 	nan 	- 	13.3393 	Log unit 	n(cnc1cc2)c([O-1])c1cc2 	nan 	nan 	- 	QMNUDYFKZYBWQX-UHFFFAOYSA
+OC1=CC2=CN=CN=C2C=C1 	- 	R1207643 	M1107327 	- 	- 	6-hydroxyquinazoline 	- 	Koerner 	charochkina 	A5793 	- 	- 	- 	3.1 	Log unit 	3.1 	Log unit 	25 	?C 	n1cnc2ccc(cc2c1)O 	3 	0 	nan 	- 	2.347 	Log unit 	n(cnc1cc2)cc1cc2O 	nan 	nan 	- 	BBPMVEXRMOAIKQ-UHFFFAOYSA
+OC1=CC2=NC=NC=C2C=C1 	- 	R1207645 	M1107328 	- 	- 	7-hydroxyquinazoline 	- 	Koerner 	charochkina 	A5793 	- 	- 	- 	3.2 	Log unit 	3.2 	Log unit 	25 	?C 	n1cnc2cc(O)ccc2c1 	3 	0 	nan 	- 	2.9534 	Log unit 	n(cnc1cc2O)cc1cc2 	nan 	nan 	- 	BWDCBBZUYJDNJZ-UHFFFAOYSA
+CC1=C2C=CC=C(O)C2=NC=N1 	- 	R1207650 	M46729 	- 	- 	8-hydroxy-4-methylquinazoline 	- 	Koerner 	charochkina 	A5793 	- 	- 	- 	2.88 	Log unit 	2.88 	Log unit 	25 	?C 	n1cnc2c(cccc2c1C)O 	2 	0 	nan 	- 	2.2299 	Log unit 	n(cnc1c(c2)O)c(C)c1cc2 	nan 	nan 	- 	RSHKEEMIDCYLTC-UHFFFAOYSA
+[S-]c1ncc2ccccc2[n+]1 	- 	R1207652 	M1158202 	- 	- 	2-mercaptoquinazoline 	- 	Koerner 	charochkina 	A5793 	- 	- 	- 	0.26 	Log unit 	0.26 	Log unit 	25 	?C 	n1c([S-])[n+]c2c(c1)cccc2 	n 	2 	nan 	- 	-6.7832 	Log unit 	[S-1]-c(ncc1cc2)[n+1]c1cc2 	nan 	nan 	- 	OOZNXWQOQWYLQB-UHFFFAOYSA
+
+... (1995 rows omitted)
+Question 11. Select an amino acid
+
+Use the Table above to view data for an amino acid of your selection from the 21 amino acids which are building blocks of protiens. See web page for possible choices. Hint: use are.containing within the .where() Table method. For example below we can find compounds which contain a trimethyl group (3 CH3
+
+) groups. We get 11 rows (records).
+
+trimethyl = data.where("NAME",are.containing("trimethyl"))
+trimethyl
+
+SMILES 	CASRN 	RECORDID 	MOLECULEID 	EXTERNALID 	N 	NAME 	NAME.1 	INTRODUCER 	MODIFIER 	ARTICLEID 	PUBMEDID 	PAGE 	TABLE 	pKa (smiles as ob. cond.) {measured} 	UNIT {pKa (smiles as ob. cond.)} 	pKa (smiles as ob. cond.) {measured, converted} 	UNIT {pKa (smiles as ob. cond.)}.1 	Temperature 	UNIT {Temperature} 	Ionizable centre (smiles) 	IC group given 	IC index predicted 	pKa predicted value 2 	UNIT {pKa predicted value 2} 	pKa predicted value 	UNIT {pKa predicted value} 	IC smiles given 	AtomNR of IC 	groupsAndICs 	COMMENTS 	INCHI_KEY
+CC1=NC(C)=C(C)C(=N1)S([O-])(=O)=O 	- 	R1207394 	M1158149 	- 	- 	2,4,5-trimethyl-6-sulphopyrimidine 	- 	Koerner 	charochkina 	A5793 	- 	- 	- 	2.33 	Log unit 	2.33 	Log unit 	25 	?C 	n1c(nc(S(=O)(=O)[O-])c(c1C)C)C 	1 	7 	nan 	- 	2.1966 	Log unit 	S(=O)(=O)([O-1])-c(nc(n1)C)c(c1C)C 	nan 	nan 	- 	KFMRGMKAGLDQJP-UHFFFAOYSA
+CC1=NC(C)=C(C)N=N1 	- 	R1207401 	M1158154 	- 	- 	3,5,6-trimethyl-1,2,4-triazine 	- 	Koerner 	charochkina 	A5793 	- 	- 	- 	2.8 	Log unit 	2.8 	Log unit 	25 	?C 	n1nc(nc(c1C)C)C 	3 	1 	nan 	- 	2.6505 	Log unit 	n(nc(C)c1C)c(n1)C 	nan 	nan 	- 	INQFSKCZGLOEIY-UHFFFAOYSA
+CC1=NC([O-])=NC(C)=C1C 	- 	R1207338 	M1106856 	- 	- 	2-hydroxy-4,5,6-trimethylpyrimidine 	- 	Koerner 	charochkina 	A5793 	- 	- 	- 	10.55 	Log unit 	10.55 	Log unit 	25 	?C 	[O-]c1nc(C)c(C)c(n1)C 	n 	0 	nan 	- 	14.3597 	Log unit 	[O-1]-c(nc(C)c1C)nc1C 	nan 	nan 	- 	ZRQPOQRDNYJQNB-UHFFFAOYSA
+Cc1nc([O-])[n+]c(C)c1C 	- 	R1207339 	M1158110 	- 	- 	2-hydroxy-4,5,6-trimethylpyrimidine 	- 	Koerner 	charochkina 	A5793 	- 	- 	- 	4.51 	Log unit 	4.51 	Log unit 	25 	?C 	[O-]c1[n+]c(C)c(C)c(n1)C 	n 	0 	nan 	- 	5.7714 	Log unit 	[O-1]-c([n+1]c(C)c1C)nc1C 	nan 	nan 	- 	7a08c35d3c7a689daa070e599cf9d1d9
+CCC1=C(C)N=NC(C)=C1C 	- 	R1207140 	M1157998 	- 	- 	4-ethyl-3,5,6-trimethylpyridazine 	- 	Koerner 	charochkina 	A5793 	- 	- 	- 	5.17 	Log unit 	5.17 	Log unit 	25 	?C 	n1nc(C)c(c(c1C)CC)C 	2 	1 	nan 	- 	4.8531 	Log unit 	n(nc(C)c1CC)c(C)c1C 	nan 	nan 	- 	QNHLVARSNAGPNO-UHFFFAOYSA
+CC1=CC(C)=C(C)N=N1 	- 	R1207154 	M1158007 	- 	- 	3,4,6-trimethylpyridazine 	- 	Koerner 	charochkina 	A5793 	- 	- 	- 	4.81 	Log unit 	4.81 	Log unit 	25 	?C 	n1nc(C)c(C)cc1C 	2 	0 	nan 	- 	4.5613 	Log unit 	n(nc(C)c1C)c(c1)C 	nan 	nan 	- 	YWJKHFLZFCIARZ-UHFFFAOYSA
+CNC(=N)N(C)C 	- 	R1206678 	M1106709 	- 	- 	N,N',N'-trimethylaguanidine 	- 	Koerner 	charochkina 	A5793 	- 	- 	- 	13.9 	Log unit 	13.9 	Log unit 	25 	?C 	N=C(N(C)C)NC 	neth 	4 	nan 	- 	13.1922 	Log unit 	CN(C)C(=N)NC 	nan 	nan 	- 	NQOFYFRKWDXGJP-UHFFFAOYSA
+CNN(C)C 	- 	R1206476 	M1016037 	- 	- 	trimethylhydrazine 	- 	Koerner 	charochkina 	A5793 	- 	- 	- 	6.8 	Log unit 	6.8 	Log unit 	25 	?C 	N(C)N(C)C 	3 	0 	nan 	- 	6.1616 	Log unit 	N(C)N(C)C 	nan 	nan 	- 	NIIPNAJXERMYOG-UHFFFAOYSA
+CC1=C(C)C(C)=NO1 	- 	R1206399 	M32590 	- 	- 	Isoxazoline, 3,4,5-trimethyl- 	- 	Koerner 	charochkina 	A5793 	- 	- 	- 	-1 	Log unit 	-1 	Log unit 	25 	?C 	n1oc(C)c(c1C)C 	nethR 	1 	nan 	- 	1.781 	Log unit 	O(N=C1C)C(C)=C1C 	nan 	nan 	- 	MGHKWBQZEBMFOH-UHFFFAOYSA
+CC1(C)C(CCC1(C)C(O)=O)C(O)=O 	- 	R1203666 	M6436 	- 	- 	cyclopentan-1,3-dicarboxlic acid-1,2,2-trimethyl 	- 	Koerner 	charochkina 	A5793 	- 	- 	- 	5.01 	Log unit 	5.01 	Log unit 	25 	?C 	OC(=O)C1C(C(C(=O)O)(C)CC1)(C)C 	co2h 	11 	nan 	- 	4.7979 	Log unit 	C1(C(=O)O)(C)C(C)(C)C(C(=O)O)CC1 	nan 	nan 	- 	LSPHULWDVZXLIL-UHFFFAOYSA
+
+... (1 rows omitted)
+
+amino = data.where("NAME",are.containing("amino"))
+amino
+
+SMILES 	CASRN 	RECORDID 	MOLECULEID 	EXTERNALID 	N 	NAME 	NAME.1 	INTRODUCER 	MODIFIER 	ARTICLEID 	PUBMEDID 	PAGE 	TABLE 	pKa (smiles as ob. cond.) {measured} 	UNIT {pKa (smiles as ob. cond.)} 	pKa (smiles as ob. cond.) {measured, converted} 	UNIT {pKa (smiles as ob. cond.)}.1 	Temperature 	UNIT {Temperature} 	Ionizable centre (smiles) 	IC group given 	IC index predicted 	pKa predicted value 2 	UNIT {pKa predicted value 2} 	pKa predicted value 	UNIT {pKa predicted value} 	IC smiles given 	AtomNR of IC 	groupsAndICs 	COMMENTS 	INCHI_KEY
+CN(C)C1=NC2=C(C=CC=C2)N=C1 	- 	R1207664 	M1158206 	- 	- 	2-dimethylaminoquinoxaline 	- 	Koerner 	charochkina 	A5793 	- 	- 	- 	3.69 	Log unit 	3.69 	Log unit 	25 	?C 	n1c(cnc2ccccc12)N(C)C 	2 	3 	nan 	- 	2.8818 	Log unit 	n(cc(n1)N(C)C)c(ccc2)c1c2 	nan 	nan 	- 	ZOWBRYALCDNHPV-UHFFFAOYSA
+CNC1=NC2=C(C=CC=C2)N=C1 	- 	R1207672 	M1158208 	- 	- 	2-methylaminoquinoxaline 	- 	Koerner 	charochkina 	A5793 	- 	- 	- 	4.07 	Log unit 	4.07 	Log unit 	25 	?C 	n1c(cnc2ccccc12)NC 	3 	3 	nan 	- 	3.0044 	Log unit 	n(cc(n1)NC)c(ccc2)c1c2 	nan 	nan 	- 	ILHBRNLXKVETML-UHFFFAOYSA
+NC1=NC(N)=C2C=CC=NC2=N1 	- 	R1207681 	M1158209 	- 	- 	2,4-diamino-1,3,8-triazanaphthalene 	- 	Koerner 	charochkina 	A5793 	- 	- 	- 	6.62 	Log unit 	6.62 	Log unit 	25 	?C 	n1c(nc2NCCCc2c1N)N 	6 	7 	nan 	- 	4.1365 	Log unit 	n(ccc1)-c(nc(n2)N)c1c2N 	nan 	nan 	- 	LYXZTYXDCZQKSS-UHFFFAOYSA
+CC1=C2C(N)=NC(N)=NC2=NC=C1CC1=CC=CC=C1 	- 	R1207682 	M1158210 	- 	- 	2,4-diamino-6-benzyl-5-methyl-1,3,8-triazanaphthalene 	- 	Koerner 	charochkina 	A5793 	- 	- 	- 	6.98 	Log unit 	6.98 	Log unit 	25 	?C 	n1c(c2c(c(Cc3ccccc3)cnc2nc1N)C)N 	6 	15 	nan 	- 	3.907 	Log unit 	c(ccc1C-c(cnc2nc3N)c(c2c(n3)N)C)cc1 	nan 	nan 	- 	XMPKZWYXJOJPLB-UHFFFAOYSA
+NC1=NC2=C(C=C1)N=CC=N2 	- 	R1207684 	M1158211 	- 	- 	6-amino-1,4,5-triazanapthalene 	- 	Koerner 	charochkina 	A5793 	- 	- 	- 	4.25 	Log unit 	4.25 	Log unit 	25 	?C 	n1ccnc2c1ccc(N)n2 	3 	0 	nan 	- 	2.8364 	Log unit 	n(ccn1)c(ccc2N)c1n2 	nan 	nan 	- 	POUPCZFBDRVLNE-UHFFFAOYSA
+NC1=CC=CC2=CC3=CC=CC(N)=C3N=C12 	- 	R1207715 	M244226 	- 	- 	4,5-diaminoacridine 	- 	Koerner 	charochkina 	A5793 	- 	- 	- 	2.55 	Log unit 	2.55 	Log unit 	25 	?C 	Nc1cccc2c1nc1c(cccc1c2)N 	n 	3 	nan 	- 	1.4381 	Log unit 	c(cc(N)c1nc2c(c3)N)cc1cc2cc3 	nan 	nan 	- 	URHUZZRZASOLKY-UHFFFAOYSA
+NC1=CC2=NC3=C(C=C(N)C=C3)N=C2C=C1 	- 	R1207738 	M120132 	- 	- 	2,7-Diaminophenazine 	- 	Koerner 	charochkina 	A5793 	- 	- 	- 	4.29 	Log unit 	4.29 	Log unit 	25 	?C 	Nc1cc2nc3ccc(N)cc3nc2cc1 	n 	4 	nan 	- 	5.4227 	Log unit 	c(c(cc1)N)c(nc(ccc2N)c3c2)c1n3 	nan 	nan 	- 	ZNXLTODDKYXLAD-UHFFFAOYSA
+CC1=NC(N)=NC(C)=N1 	- 	R1207396 	M1158150 	- 	- 	2-amino-4,6-dimethyl-1,3,5-triazine 	- 	Koerner 	charochkina 	A5793 	- 	- 	- 	3.56 	Log unit 	3.56 	Log unit 	25 	?C 	n1c(nc(nc1C)N)C 	3 	7 	nan 	- 	5.705 	Log unit 	n(c(nc1C)N)c(n1)C 	nan 	nan 	- 	VQZRXBOTCNWNLM-UHFFFAOYSA
+NC1=NN=C(CC2=CC=C(Cl)C=C2)C(N)=N1 	- 	R1207397 	M1158151 	- 	- 	3,5-diamino-6-(p-chlorobenzyl)1,2,4-triazine 	- 	Koerner 	charochkina 	A5793 	- 	- 	- 	6.47 	Log unit 	6.47 	Log unit 	25 	?C 	n1nc(Cc2ccc(Cl)cc2)c(nc1N)N 	6 	8 	nan 	- 	6.5667 	Log unit 	Cl-c(ccc1C-c(nnc2N)c(n2)N)cc1 	nan 	nan 	- 	ZFCFIWRCSBINTL-UHFFFAOYSA
+NC1=NN=C(C(N)=N1)C1=CC=C(Cl)C=C1 	- 	R1207398 	M1158152 	- 	- 	3,5-diamino-6-(p-chlorophenyl)1,2,4-triazine 	- 	Koerner 	charochkina 	A5793 	- 	- 	- 	6.07 	Log unit 	6.07 	Log unit 	25 	?C 	n1nc(c2ccc(Cl)cc2)c(nc1N)N 	6 	7 	nan 	- 	6.0668 	Log unit 	Cl-c(ccc1-c(nnc2N)c(n2)N)cc1 	nan 	nan 	- 	SKUWJDFAYIADTK-UHFFFAOYSA
+
+... (431 rows omitted)
+
+check('tests/q11.py')
+
+All tests passed!
+Display molecular structure
+
+SMILES is a shorthand language to describe molecular structure. Execute each structure below.
+
+Chem.MolFromSmiles("[H]-O-[H]") #Water
+
+Chem.MolFromSmiles("[CH3]") #Methyl radical
+
+Chem.MolFromSmiles("C-C-O") #Ethanol
+
+Chem.MolFromSmiles("[NH2+]CC(O)=O") # Glycine
+
+Selected amino acid 2D molecular structure
+
+Try it out for fun! Use the same above syntax and the SMILES string from your above Table to display a 2D amino acid structurefrom your selection. Even if there is no rdkit, try your hand at the SMILES molecular description.
+
+smile_struct = 'CC1=NC(N)=NC(C)=N1'
+
+Chem.MolFromSmiles(smile_struct)
+
+Code to create a grid of molecular images with labels
+
+Execute and study the below code
+
+mols = [Chem.MolFromSmiles(x) for x in amino.column("SMILES") if x is not None] #Iterator
+mols
+name = amino.column("NAME")
+
+for i,m in enumerate(mols):
+    m.SetProp("Name",name[i])
+
+p = Draw.MolsToGridImage( [mols[x] for x in range(0,3)] , legends=[x.GetProp("Name") for x in mols],molsPerRow=3,subImgSize=(300,250), useSVG=True )
+p
+
+Use pandas to add 2D structures to dataframe
+
+We can convert our Table to pandas then use the RDKit AddMoleculeColumnToFrame method to add structures. One row has an anomolous nitrogen atom, N, so don't be alarmed by the error presented. Occasionally the 2D images of the structures fail to appear, unfortunate but not a cause for concern either.
+
+df = data.to_df()
+df
+
+	SMILES 	CASRN 	RECORDID 	MOLECULEID 	EXTERNALID 	N 	NAME 	NAME.1 	INTRODUCER 	MODIFIER 	... 	IC index predicted 	pKa predicted value 2 	UNIT {pKa predicted value 2} 	pKa predicted value 	UNIT {pKa predicted value} 	IC smiles given 	AtomNR of IC 	groupsAndICs 	COMMENTS 	INCHI_KEY
+0 	[O-]C1=C2C=CC=CC2=NC=N1 	- 	R1207641 	M20829 	- 	- 	4-Hydroxyquinazoline 	- 	Koerner 	charochkina 	... 	7.0 	NaN 	- 	13.3393 	Log unit 	n(cnc1cc2)c([O-1])c1cc2 	NaN 	nan 	- 	QMNUDYFKZYBWQX-UHFFFAOYSA
+1 	OC1=CC2=CN=CN=C2C=C1 	- 	R1207643 	M1107327 	- 	- 	6-hydroxyquinazoline 	- 	Koerner 	charochkina 	... 	0.0 	NaN 	- 	2.3470 	Log unit 	n(cnc1cc2)cc1cc2O 	NaN 	nan 	- 	BBPMVEXRMOAIKQ-UHFFFAOYSA
+2 	OC1=CC2=NC=NC=C2C=C1 	- 	R1207645 	M1107328 	- 	- 	7-hydroxyquinazoline 	- 	Koerner 	charochkina 	... 	0.0 	NaN 	- 	2.9534 	Log unit 	n(cnc1cc2O)cc1cc2 	NaN 	nan 	- 	BWDCBBZUYJDNJZ-UHFFFAOYSA
+3 	CC1=C2C=CC=C(O)C2=NC=N1 	- 	R1207650 	M46729 	- 	- 	8-hydroxy-4-methylquinazoline 	- 	Koerner 	charochkina 	... 	0.0 	NaN 	- 	2.2299 	Log unit 	n(cnc1c(c2)O)c(C)c1cc2 	NaN 	nan 	- 	RSHKEEMIDCYLTC-UHFFFAOYSA
+4 	[S-]c1ncc2ccccc2[n+]1 	- 	R1207652 	M1158202 	- 	- 	2-mercaptoquinazoline 	- 	Koerner 	charochkina 	... 	2.0 	NaN 	- 	-6.7832 	Log unit 	[S-1]-c(ncc1cc2)[n+1]c1cc2 	NaN 	nan 	- 	OOZNXWQOQWYLQB-UHFFFAOYSA
+... 	... 	... 	... 	... 	... 	... 	... 	... 	... 	... 	... 	... 	... 	... 	... 	... 	... 	... 	... 	... 	...
+1995 	OC(=O)COC1=CC=CC(=C1)[N+]([O-])=O 	1878-88-2 	R2182408 	M896 	- 	99 	m-Nitrophenoxyacetic Acid 	- 	Koerner 	Koerner 	... 	NaN 	NaN 	- 	NaN 	- 	nan 	NaN 	nan 	- 	BNRRQAASFDGMMQ-UHFFFAOYSA
+1996 	COC1=CC=CC(OC)=C1C(=O)N[C@H]1[C@H]2SC(C)(C)[C@... 	61-32-5 	R1509608 	M9792 	- 	99 	6-({[2,6-bis(methyloxy)phenyl]carbonyl}amino)-... 	- 	Koerner 	Koerner 	... 	5.0 	2.9643 	Log unit 	NaN 	- 	nan 	NaN 	nan 	- 	RJQXTJLFIWVMTO-TYNCELHUSA
+1997 	CCCCCCCC\C=C\CCCCCCCC(=O)OC[C@@H](CO[P@@](O)(=... 	- 	R1321912 	M663928 	- 	99 	1,2-Dioleoylphosphatidylethano 	- 	Koerner 	charochkina 	... 	NaN 	7.7499 	Log unit 	NaN 	- 	nan 	NaN 	nan 	- 	MWRBNPKJOOWZPW-AODYVXGBSA
+1998 	CCCCCCCC\C=C\CCCCCCCC(=O)OCC(COP(O)(=O)OCCN)OC... 	- 	R1321798 	M659539 	- 	99 	1,2-Dioleoylphosphatidylethanolamine 	- 	Koerner 	charochkina 	... 	NaN 	7.7499 	Log unit 	NaN 	- 	nan 	NaN 	nan 	- 	MWRBNPKJOOWZPW-XPWSMXQVSA
+1999 	NC1=CC=C(N)C(O)=C1N 	- 	R2172809 	M2608463 	- 	nan 	- 	- 	Koerner 	Koerner 	... 	NaN 	NaN 	- 	NaN 	- 	nan 	NaN 	nan 	nan 	ACHUKHFWGSAMMV-UHFFFAOYSA
+
+2000 rows × 32 columns
+
+df = data.to_df() # Convert Table to pandas dataframe
+PandasTools.AddMoleculeColumnToFrame(df,smilesCol='SMILES',molCol='Molecule',includeFingerprints=True)
+col = df.pop("NAME")
+df.insert(0, col.name, col) # Move structure to first column
+col = df.pop("Molecule")
+df.insert(1, col.name, col) # Move structure to first column
+df
+
+[23:23:37] Explicit valence for atom # 11 N, 4, is greater than permitted
+
+	NAME 	Molecule 	SMILES 	CASRN 	RECORDID 	MOLECULEID 	EXTERNALID 	N 	NAME.1 	INTRODUCER 	... 	IC index predicted 	pKa predicted value 2 	UNIT {pKa predicted value 2} 	pKa predicted value 	UNIT {pKa predicted value} 	IC smiles given 	AtomNR of IC 	groupsAndICs 	COMMENTS 	INCHI_KEY
+0 	4-Hydroxyquinazoline 	
+Mol
+	[O-]C1=C2C=CC=CC2=NC=N1 	- 	R1207641 	M20829 	- 	- 	- 	Koerner 	... 	7.0 	NaN 	- 	13.3393 	Log unit 	n(cnc1cc2)c([O-1])c1cc2 	NaN 	nan 	- 	QMNUDYFKZYBWQX-UHFFFAOYSA
+1 	6-hydroxyquinazoline 	
+Mol
+	OC1=CC2=CN=CN=C2C=C1 	- 	R1207643 	M1107327 	- 	- 	- 	Koerner 	... 	0.0 	NaN 	- 	2.3470 	Log unit 	n(cnc1cc2)cc1cc2O 	NaN 	nan 	- 	BBPMVEXRMOAIKQ-UHFFFAOYSA
+2 	7-hydroxyquinazoline 	
+Mol
+	OC1=CC2=NC=NC=C2C=C1 	- 	R1207645 	M1107328 	- 	- 	- 	Koerner 	... 	0.0 	NaN 	- 	2.9534 	Log unit 	n(cnc1cc2O)cc1cc2 	NaN 	nan 	- 	BWDCBBZUYJDNJZ-UHFFFAOYSA
+3 	8-hydroxy-4-methylquinazoline 	
+Mol
+	CC1=C2C=CC=C(O)C2=NC=N1 	- 	R1207650 	M46729 	- 	- 	- 	Koerner 	... 	0.0 	NaN 	- 	2.2299 	Log unit 	n(cnc1c(c2)O)c(C)c1cc2 	NaN 	nan 	- 	RSHKEEMIDCYLTC-UHFFFAOYSA
+4 	2-mercaptoquinazoline 	
+Mol
+	[S-]c1ncc2ccccc2[n+]1 	- 	R1207652 	M1158202 	- 	- 	- 	Koerner 	... 	2.0 	NaN 	- 	-6.7832 	Log unit 	[S-1]-c(ncc1cc2)[n+1]c1cc2 	NaN 	nan 	- 	OOZNXWQOQWYLQB-UHFFFAOYSA
+... 	... 	... 	... 	... 	... 	... 	... 	... 	... 	... 	... 	... 	... 	... 	... 	... 	... 	... 	... 	... 	...
+1995 	m-Nitrophenoxyacetic Acid 	
+Mol
+	OC(=O)COC1=CC=CC(=C1)[N+]([O-])=O 	1878-88-2 	R2182408 	M896 	- 	99 	- 	Koerner 	... 	NaN 	NaN 	- 	NaN 	- 	nan 	NaN 	nan 	- 	BNRRQAASFDGMMQ-UHFFFAOYSA
+1996 	6-({[2,6-bis(methyloxy)phenyl]carbonyl}amino)-... 	
+Mol
+	COC1=CC=CC(OC)=C1C(=O)N[C@H]1[C@H]2SC(C)(C)[C@... 	61-32-5 	R1509608 	M9792 	- 	99 	- 	Koerner 	... 	5.0 	2.9643 	Log unit 	NaN 	- 	nan 	NaN 	nan 	- 	RJQXTJLFIWVMTO-TYNCELHUSA
+1997 	1,2-Dioleoylphosphatidylethano 	
+Mol
+	CCCCCCCC\C=C\CCCCCCCC(=O)OC[C@@H](CO[P@@](O)(=... 	- 	R1321912 	M663928 	- 	99 	- 	Koerner 	... 	NaN 	7.7499 	Log unit 	NaN 	- 	nan 	NaN 	nan 	- 	MWRBNPKJOOWZPW-AODYVXGBSA
+1998 	1,2-Dioleoylphosphatidylethanolamine 	
+Mol
+	CCCCCCCC\C=C\CCCCCCCC(=O)OCC(COP(O)(=O)OCCN)OC... 	- 	R1321798 	M659539 	- 	99 	- 	Koerner 	... 	NaN 	7.7499 	Log unit 	NaN 	- 	nan 	NaN 	nan 	- 	MWRBNPKJOOWZPW-XPWSMXQVSA
+1999 	- 	
+Mol
+	NC1=CC=C(N)C(O)=C1N 	- 	R2172809 	M2608463 	- 	nan 	- 	Koerner 	... 	NaN 	NaN 	- 	NaN 	- 	nan 	NaN 	nan 	nan 	ACHUKHFWGSAMMV-UHFFFAOYSA
+
+2000 rows × 33 columns
+pKa data examination
+
+Now we will look at a data set derived from the above data but with computed molecular attributes for our machine learning. This data set is computed and described by Prof. Vince Voelz in the Temple Chemistry department and a graduate student, Robert Raddi. See their paper: Stacking Gaussian processes to improve pKa predictions in the SAMPL7 challenge.
+
+db = pd.read_pickle("data/pKaDatabaseF22.pkl")
+db_table = Table().from_df(db) # Datascience Table from pandas dataframe
+db
+
+	deprotonated microstate ID 	protonated microstate ID 	deprotonated microstate smiles 	protonated microstate smiles 	AM1BCC partial charge (prot. atom) 	AM1BCC partial charge (deprot. atom) 	AM1BCC partial charge (prot. atoms 1 bond away) 	AM1BCC partial charge (deprot. atoms 1 bond away) 	AM1BCC partial charge (prot. atoms 2 bond away) 	AM1BCC partial charge (deprot. atoms 2 bond away) 	... 	SASA (Lee) 	Bond Order 	Change in Enthalpy (kJ/mol) (prot-deprot) 	pKa 	href 	Weight 	num ionizable groups 	pKa source 	protonated molecule 	deprotonated molecule
+0 	methyclothiazide_micro001 	methyclothiazide_micro000 	C[N@]1[C@@H]([N-]c2cc(c(cc2S1(=O)=O)S(=O)(=O)N... 	C[N@]1[C@@H](Nc2cc(c(cc2S1(=O)=O)S(=O)(=O)N)Cl... 	-0.79657 	-0.55694 	0.402800 	0.330770 	-0.447656 	-0.405384 	... 	9.899414 	0.714946 	-0.793388 	9.40 	caine2019experiment 	360.220000 	2.0 	NaN 	<rdkit.Chem.rdchem.Mol object at 0x7fd4435a9300> 	<rdkit.Chem.rdchem.Mol object at 0x7fd443542f70>
+1 	sulpiride_micro001 	sulpiride_micro000 	CC[N@]1CCC[C@H]1C[N-]C(=O)c2cc(ccc2OC)S(=O)(=O)N 	CC[N@]1CCC[C@H]1CNC(=O)c2cc(ccc2OC)S(=O)(=O)N 	-0.53903 	-0.59248 	0.376450 	0.329985 	-0.291253 	-0.324665 	... 	9.676525 	0.692298 	3.151623 	10.21 	caine2019experiment 	341.400000 	2.0 	NaN 	<rdkit.Chem.rdchem.Mol object at 0x7fd443471350> 	<rdkit.Chem.rdchem.Mol object at 0x7fd443507290>
+2 	celecoxib_micro001 	celecoxib_micro000 	Cc1ccc(cc1)c2cc(nn2c3ccc(cc3)S(=O)(=O)[NH-])C(... 	Cc1ccc(cc1)c2cc(nn2c3ccc(cc3)S(=O)(=O)N)C(F)(F)F 	-1.02861 	-1.31288 	1.525610 	1.657150 	-0.558303 	-0.574737 	... 	12.402807 	0.689078 	0.218695 	11.10 	caine2019experiment 	381.400000 	1.0 	NaN 	<rdkit.Chem.rdchem.Mol object at 0x7fd4434713a0> 	<rdkit.Chem.rdchem.Mol object at 0x7fd44343fa60>
+3 	metolazone_micro001 	metolazone_micro000 	Cc1ccccc1N2[C@@H]([N-]c3cc(c(cc3C2=O)S(=O)(=O)... 	Cc1ccccc1N2[C@@H](Nc3cc(c(cc3C2=O)S(=O)(=O)N)Cl)C 	-0.74198 	-0.55041 	0.316865 	0.292335 	-0.354740 	-0.335038 	... 	10.720588 	0.713289 	0.808265 	9.70 	caine2019experiment 	365.800000 	2.0 	NaN 	<rdkit.Chem.rdchem.Mol object at 0x7fd4434713f0> 	<rdkit.Chem.rdchem.Mol object at 0x7fd44343f9c0>
+4 	polythiazide_micro001 	polythiazide_micro000 	C[N@]1[C@@H]([N-]c2cc(c(cc2S1(=O)=O)S(=O)(=O)N... 	C[N@]1[C@@H](Nc2cc(c(cc2S1(=O)=O)S(=O)(=O)N)Cl... 	-0.79841 	-0.56617 	0.412410 	0.343865 	-0.458234 	-0.419302 	... 	11.673626 	0.726989 	0.230973 	9.10 	caine2019experiment 	439.900000 	2.0 	NaN 	<rdkit.Chem.rdchem.Mol object at 0x7fd443471440> 	<rdkit.Chem.rdchem.Mol object at 0x7fd44343f920>
+... 	... 	... 	... 	... 	... 	... 	... 	... 	... 	... 	... 	... 	... 	... 	... 	... 	... 	... 	... 	... 	...
+137 	sulfadimethoxine_micro001 	sulfadimethoxine_micro000 	COc1cc([N-]S(=O)(=O)c2ccc(N)cc2)nc(OC)n1 	N([H])(c1nc(OC([H])([H])[H])nc(OC([H])([H])[H]... 	-0.86987 	-0.98043 	1.116625 	1.236825 	-0.641240 	-0.677832 	... 	13.363709 	0.690570 	-0.997823 	7.02 	NaN 	310.073576 	2.0 	NaN 	<rdkit.Chem.rdchem.Mol object at 0x7fd4437a7d80> 	<rdkit.Chem.rdchem.Mol object at 0x7fd443381260>
+138 	sulfamethoxydiazine_micro001 	sulfamethoxydiazine_micro000 	COc1cnc([N-]S(=O)(=O)c2ccc(N)cc2)nc1 	N([H])(c1nc([H])c(OC([H])([H])[H])c([H])n1)S(=... 	-0.85693 	-0.86838 	1.173495 	1.254585 	-0.656337 	-0.692953 	... 	13.757159 	0.703955 	1.207213 	6.63 	NaN 	280.063011 	2.0 	NaN 	<rdkit.Chem.rdchem.Mol object at 0x7fd4437a7ce0> 	<rdkit.Chem.rdchem.Mol object at 0x7fd4433812b0>
+139 	sulfisomidine_micro001 	sulfisomidine_micro000 	Cc1cc([N-]S(=O)(=O)c2ccc(N)cc2)nc(C)n1 	N([H])(c1nc(C([H])([H])[H])nc(C([H])([H])[H])c... 	-0.87755 	-0.90794 	1.095525 	1.169120 	-0.621792 	-0.650823 	... 	13.885995 	0.699020 	-0.019763 	7.40 	NaN 	278.083747 	2.0 	NaN 	<rdkit.Chem.rdchem.Mol object at 0x7fd4437a7c40> 	<rdkit.Chem.rdchem.Mol object at 0x7fd443381300>
+140 	sulfamethazine_micro001 	sulfamethazine_micro000 	Cc1cc(C)nc([N-]S(=O)(=O)c2ccc(N)cc2)n1 	N([H])(c1nc(C([H])([H])[H])c([H])c(C([H])([H])... 	-0.85927 	-0.94180 	1.196925 	1.310425 	-0.670377 	-0.710920 	... 	13.804486 	0.700089 	1.263680 	7.37 	NaN 	278.083747 	2.0 	NaN 	<rdkit.Chem.rdchem.Mol object at 0x7fd4437a7ba0> 	<rdkit.Chem.rdchem.Mol object at 0x7fd443381350>
+141 	sulfapyridine_micro001 	sulfapyridine_micro000 	Nc1ccc(S(=O)(=O)[N-]c2ccccn2)cc1 	N([H])(c1nc([H])c([H])c([H])c1[H])S(=O)(=O)c1c... 	-0.88207 	-0.94192 	1.074110 	1.177410 	-0.591455 	-0.637872 	... 	13.637212 	0.688222 	0.048748 	8.43 	NaN 	249.057198 	2.0 	NaN 	<rdkit.Chem.rdchem.Mol object at 0x7fd4437a7b00> 	<rdkit.Chem.rdchem.Mol object at 0x7fd4433813a0>
+
+3456 rows × 34 columns
+We can look at the structures and data on several derivatives of acetic acid by executing the code below
+
+glycine=db_table.where("protonated microstate ID",are.containing("acetic acid")) # Select those data containing acetic acid in the name.
+mols = [Chem.MolFromSmiles(x) for x in glycine.column("protonated microstate smiles") if x is not None]
+pKa = glycine.column("pKa")
+
+for i,m in enumerate(mols):
+    m.SetProp("Name","pKa: "+str(pKa[i]))
+p = Draw.MolsToGridImage( [mols[x] for x in range(0,3)] , legends=[x.GetProp("Name") for x in mols],molsPerRow=2,subImgSize=(300,250), useSVG=True )
+p
+
+protonated microstate smiles
+
+Here we place the pKa which we will predict in the first column. Use SMILES format to display structures. Execute the below cells.
+
+#PandasTools.AddMoleculeColumnToFrame(db,smilesCol='protonated microstate smiles',molCol='Molecule',includeFingerprints=True)
+PandasTools.AddMoleculeColumnToFrame(db, smilesCol='protonated microstate smiles', molCol='protonated molecule')
+PandasTools.AddMoleculeColumnToFrame(db, smilesCol='deprotonated microstate smiles', molCol='deprotonated molecule')
+col = db.pop('protonated molecule')
+db.insert(0, col.name, col)
+col = db.pop('deprotonated molecule')
+db.insert(1, col.name, col)
+col = db.pop("pKa")
+db.insert(0, col.name, col)
+db=db.sort_values(by='pKa',ascending=False)
+db.head()
+
+	pKa 	protonated molecule 	deprotonated molecule 	deprotonated microstate ID 	protonated microstate ID 	deprotonated microstate smiles 	protonated microstate smiles 	AM1BCC partial charge (prot. atom) 	AM1BCC partial charge (deprot. atom) 	AM1BCC partial charge (prot. atoms 1 bond away) 	... 	Extented Hückel partial charge (deprot. atoms 2 bond away) 	∆G_solv (kJ/mol) (prot-deprot) 	SASA (Shrake) 	SASA (Lee) 	Bond Order 	Change in Enthalpy (kJ/mol) (prot-deprot) 	href 	Weight 	num ionizable groups 	pKa source
+735 	19.2 	<rdkit.Chem.rdchem.Mol object at 0x7fd4434876f0> 	<rdkit.Chem.rdchem.Mol object at 0x7fd443592c70> 	2-Methyl-2-propanol_micro001 	2-Methyl-2-propanol_micro000 	CC(C)(C)[O-] 	CC(C)(C)O 	-0.59945 	-0.89949 	0.14550 	... 	-0.078697 	-3.830199 	15.763255 	15.606648 	0.592560 	5.993620 	OChem/ochem_database.pkl 	NaN 	1.0 	NaN
+1323 	17.6 	<rdkit.Chem.rdchem.Mol object at 0x7fd44342ba70> 	<rdkit.Chem.rdchem.Mol object at 0x7fd44357eff0> 	2-butanol_micro001 	2-butanol_micro000 	CC[C@H](C)[O-] 	CC[C@H](C)O 	-0.59952 	-0.89927 	0.13978 	... 	-0.051464 	-2.130056 	16.255857 	16.216629 	0.605273 	3.305126 	OChem/ochem_database.pkl 	NaN 	1.0 	NaN
+832 	17.1 	<rdkit.Chem.rdchem.Mol object at 0x7fd44346e1f0> 	<rdkit.Chem.rdchem.Mol object at 0x7fd443565770> 	2-Propanol_micro001 	2-Propanol_micro000 	CC(C)[O-] 	CC(C)O 	-0.60156 	-0.90627 	0.13834 	... 	-0.077626 	-1.610989 	17.241060 	17.052961 	0.601137 	3.349921 	OChem/ochem_database.pkl 	NaN 	1.0 	NaN
+1200 	16.6 	<rdkit.Chem.rdchem.Mol object at 0x7fd4434284a0> 	<rdkit.Chem.rdchem.Mol object at 0x7fd4435b3990> 	3-methylindole_micro001 	3-methylindole_micro000 	Cc1c[n-]c2c1cccc2 	Cc1c[nH]c2c1cccc2 	-0.58407 	-0.41610 	0.03945 	... 	-0.329121 	-2.156373 	12.315043 	12.143030 	0.719695 	2.331782 	OChem/ochem_database.pkl 	NaN 	0.0 	NaN
+1473 	16.4 	<rdkit.Chem.rdchem.Mol object at 0x7fd4435b5850> 	<rdkit.Chem.rdchem.Mol object at 0x7fd443548b30> 	Mandelic acid_micro001 	Mandelic acid_micro000 	c1ccc(cc1)[C@H](C(=O)[O-])[O-] 	c1ccc(cc1)[C@H](C(=O)[O-])O 	-0.63444 	-0.91074 	0.03854 	... 	-0.394657 	-22.344141 	17.733662 	17.323053 	0.607562 	1.288648 	OChem/ochem_database.pkl 	NaN 	1.0 	NaN
+
+5 rows × 34 columns
+Examine a few acidity and molecular weight distribution
+
+The below code will generate histograms for acidity as measured by pKa and molar molecular weight measured in grams per mole. Execute code and examine output.
+
+fig = plt.figure()
+ax = plt.subplot(2,2,1)
+ax1 = plt.subplot(2,2,2)
+db.sort_values('Weight', ascending=True)
+ax = db["Weight"].plot.hist(rot=0, figsize=(14, 4), bins=25, edgecolor='black', linewidth=1.2, ax=ax)
+ax.set_xlabel("molecular weight", size=16)
+ax.set_ylabel("", size=12)
+ax.axvline(x=db['Weight'].mean(), linewidth=4, color='r')
+
+ax1 = db["pKa"].plot.hist(rot=0, figsize=(14, 4), bins=25, edgecolor='black', linewidth=1.2, ax=ax1)#, subplots=True, layout=(2,2))
+ax1.set_xlabel(r"$pK_{a}$", size=16)
+ax1.set_ylabel("", size=12)
+ax1.axvline(x=4, linewidth=4, color='r')
+ax1.axvline(x=9, linewidth=4, color='r')
+fig = ax1.get_figure()
+fig.savefig("MW_dist.pdf")
+
+Look at pKa and molecular attribute relationships
+
+Here we will plot some of the attributes to see if there is a relationship between their values and the pKa we are trying to predict. Execute these cells.
+
+db.plot.scatter("Weight","pKa")
+
+<Axes: xlabel='Weight', ylabel='pKa'>
+
+db.plot.scatter("AM1BCC partial charge (prot. atom)","pKa")
+
+<Axes: xlabel='AM1BCC partial charge (prot. atom)', ylabel='pKa'>
+
+db.plot.scatter("Bond Order","pKa")
+
+<Axes: xlabel='Bond Order', ylabel='pKa'>
+
+Nearest Neighbor
+
+Let's restrict our consideration to acids with 0 < pKa < 7. The reason may be evident from the distribution in the histogram of pKa's above with two peaks, one around 4 and another at 8. The negative pKa's are outliers which also will be difficult to predict. For machine learning we will also drop the 2D molecular structures.
+
+dblow = db[db["pKa"].values<7]
+dblow = dblow[dblow["pKa"].values>0]
+
+List attribute columns with index
+
+for (i, item) in enumerate(list(dblow.columns)):
+    print(i, item)
+
+0 pKa
+1 protonated molecule
+2 deprotonated molecule
+3 deprotonated microstate ID
+4 protonated microstate ID
+5 deprotonated microstate smiles
+6 protonated microstate smiles
+7 AM1BCC partial charge (prot. atom)
+8 AM1BCC partial charge (deprot. atom)
+9 AM1BCC partial charge (prot. atoms 1 bond away)
+10 AM1BCC partial charge (deprot. atoms 1 bond away)
+11 AM1BCC partial charge (prot. atoms 2 bond away)
+12 AM1BCC partial charge (deprot. atoms 2 bond away)
+13 Gasteiger partial charge (prot. atom)
+14 Gasteiger partial charge (deprot. atom)
+15 Gasteiger partial charge (prot. atoms 1 bond away)
+16 Gasteiger partial charge (deprot. atoms 1 bond away)
+17 Gasteiger partial charge (prot. atoms 2 bond away)
+18 Gasteiger partial charge (deprot. atoms 2 bond away)
+19 Extented Hückel partial charge (prot. atom)
+20 Extented Hückel partial charge (deprot. atom)
+21 Extented Hückel partial charge (prot. atoms 1 bond away)
+22 Extented Hückel partial charge (deprot. atoms 1 bond away)
+23 Extented Hückel partial charge (prot. atoms 2 bond away)
+24 Extented Hückel partial charge (deprot. atoms 2 bond away)
+25 ∆G_solv (kJ/mol) (prot-deprot)
+26 SASA (Shrake)
+27 SASA (Lee)
+28 Bond Order
+29 Change in Enthalpy (kJ/mol) (prot-deprot)
+30 href
+31 Weight
+32 num ionizable groups
+33 pKa source
+
+Selection of attributes/features for training and prediction
+
+We need too select the features that we will use in the training. These will include the charges computed for key atoms adjacent to the acidic proton (H+) in columns (7-12) using the AM1BCC method, ∆G_solv (kJ/mol) (prot-deprot) in column 25,solvent accessible surface area (SASA) in column 26, bond order in column 28, Change in Enthalpy (kJ/mol) (prot-deprot) in column 29, and molecular weight in column 32. These are the 11 attributes features we will use. We also keep the labels and SMILES as well as the pKa we will train on.
+
+molecular = Table().from_df(dblow) # Now back to Table
+molecular = molecular.select(0, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 25, 26,  28, 29, 32)
+molecular
+
+pKa 	deprotonated microstate ID 	protonated microstate ID 	deprotonated microstate smiles 	protonated microstate smiles 	AM1BCC partial charge (prot. atom) 	AM1BCC partial charge (deprot. atom) 	AM1BCC partial charge (prot. atoms 1 bond away) 	AM1BCC partial charge (deprot. atoms 1 bond away) 	AM1BCC partial charge (prot. atoms 2 bond away) 	AM1BCC partial charge (deprot. atoms 2 bond away) 	∆G_solv (kJ/mol) (prot-deprot) 	SASA (Shrake) 	Bond Order 	Change in Enthalpy (kJ/mol) (prot-deprot) 	num ionizable groups
+6.98 	Fenpropimorph_micro001 	Fenpropimorph_micro000 	C[C@@H]1CN(C[C@@H](O1)C)C[C@H](C)Cc2ccc(cc2)C(C)(C)C 	C[C@@H]1C[NH+](C[C@@H](O1)C)C[C@H](C)Cc2ccc(cc2)C(C)(C)C 	-0.68511 	-0.73381 	0.08429 	0.15012 	-0.241648 	-0.249836 	-181.942 	3.69451 	0.690272 	-3.31925 	1
+6.95 	Imidazole_micro001 	Imidazole_micro000 	c1cnc[n-]1 	c1cnc[nH]1 	-0.32082 	-0.77555 	0.059345 	0.254725 	-0.23172 	-0.478817 	-2.38957 	12.8076 	0.709959 	2.43947 	1
+6.95 	3-methoxy-6-mercaptopyridazine_micro001 	3-methoxy-6-mercaptopyridazine_micro000 	COc1ccc(nn1)[S-] 	COc1ccc(nn1)S 	-0.31734 	-0.8696 	0.39356 	0.63947 	-0.23098 	-0.321095 	260.578 	20.1967 	0.692136 	3.23352 	0
+6.95 	2-(N-(2-cyanoethyl)-N-methyl)aminopropylbenzene_micro001 	2-(N-(2-cyanoethyl)-N-methyl)aminopropylbenzene_micro000 	C[N@@](CCCc1ccccc1)CCC#N 	C[N@@H+](CCCc1ccccc1)CCC#N 	-0.6868 	-0.71558 	0.0980667 	0.152773 	-0.377603 	-0.38171 	-7.79839 	5.66492 	0.729181 	-5.29326 	1
+6.95 	1-Methylimidazole_micro001 	1-Methylimidazole_micro000 	Cn1ccnc1 	Cn1cc[nH+]c1 	-0.13447 	-0.6681 	-0.0652 	0.339775 	-0.08754 	-0.379837 	-0.763702 	12.315 	0.712302 	-0.0497005 	1
+6.95 	Morpholine, N-(3-ethylcarbonyl-3,3-diphenyl)propyl-_micro001 	Morpholine, N-(3-ethylcarbonyl-3,3-diphenyl)propyl-_micro000 	CCC(=O)C(CCN1CCOCC1)(c2ccccc2)c3ccccc3 	CCC(=O)C(CC[NH+]1CCOCC1)(c2ccccc2)c3ccccc3 	-0.68628 	-0.75366 	0.0838167 	0.156463 	-0.255792 	-0.265154 	-194.77 	3.94081 	0.736083 	-3.04835 	1
+6.95 	2-bis(2-chloroethyl)aminopropane_micro001 	2-bis(2-chloroethyl)aminopropane_micro000 	CC(C)N(CCCl)CCCl 	CC(C)[NH+](CCCl)CCCl 	-0.70654 	-0.72922 	0.11593 	0.159537 	-0.288393 	-0.267537 	-211.778 	4.92602 	0.712272 	-3.40698 	1
+6.94 	4-mercaptopyrimidine_micro001 	4-mercaptopyrimidine_micro000 	c1cncnc1[S-] 	c1cncnc1S 	-0.31642 	-0.87725 	0.53312 	0.72799 	-0.53722 	-0.593995 	269.511 	19.9504 	0.682072 	3.18459 	0
+6.94 	Barbituric acid_micro001 	Barbituric acid_micro000 	CC[C@]1(C(=O)NC(=O)[N-]C1=O)c2ccc(cc2)[N+](=O)[O-] 	CCC1(C(=O)NC(=O)NC1=O)c2ccc(cc2)[N+](=O)[O-] 	-0.59474 	-0.53725 	0.763895 	0.733295 	-0.500314 	-0.554638 	-4.01867 	12.0687 	0.696479 	0.947145 	2
+6.92 	2,3-diaminobutane_micro001 	2,3-diaminobutane_micro000 	C[C@@H]([C@H](C)[NH-])[NH3+] 	C[C@@H]([C@H](C)N)[NH3+] 	-0.92502 	-0.66069 	0.20236 	0.22329 	-0.031075 	-0.30179 	-247.38 	6.89642 	0.716106 	1.05826 	2
+
+... (2035 rows omitted)
+Train, test split
+Question 12
+
+Split the molecular Table into train and test data using 80% for training and remembering that the split must be an integer using int() function. Again we will select certain rowsas attributes.
+
+train, test = molecular.split(int(molecular.num_rows*0.8))
+print(train.num_rows, 'training and', test.num_rows, 'test instances.')
+
+train.show(3)
+
+1636 training and 409 test instances.
+
+pKa 	deprotonated microstate ID 	protonated microstate ID 	deprotonated microstate smiles 	protonated microstate smiles 	AM1BCC partial charge (prot. atom) 	AM1BCC partial charge (deprot. atom) 	AM1BCC partial charge (prot. atoms 1 bond away) 	AM1BCC partial charge (deprot. atoms 1 bond away) 	AM1BCC partial charge (prot. atoms 2 bond away) 	AM1BCC partial charge (deprot. atoms 2 bond away) 	∆G_solv (kJ/mol) (prot-deprot) 	SASA (Shrake) 	Bond Order 	Change in Enthalpy (kJ/mol) (prot-deprot) 	num ionizable groups
+4.7 	trans-cyclopentane-1-carboxylic acid-2-acetic acid_micro001 	trans-cyclopentane-1-carboxylic acid-2-acetic acid_micro000 	C1C[C@@H]([C@@H](C1)C(=O)O)CC(=O)[O-] 	C1C[C@@H]([C@@H](C1)C(=O)O)CC(=O)O 	-0.61426 	-0.57806 	0.63453 	0.65627 	-0.326345 	-0.365875 	908.977 	15.0244 	0.583073 	9.60611 	2
+3.65 	N-methoxyamino-N-methylmethane_micro001 	N-methoxyamino-N-methylmethane_micro000 	CN(C)OC 	C[NH+](C)OC 	-0.46561 	-0.46153 	-0.00955667 	-0.01585 	-0.287293 	-0.266043 	0.427777 	5.41862 	0.738642 	6.5275 	1
+0.7 	2-ethylthiopyrimidine_micro001 	2-ethylthiopyrimidine_micro000 	CCSc1ncccn1 	CCSc1[nH+]cccn1 	-0.26834 	-0.66931 	0.313775 	0.570975 	-0.322855 	-0.486292 	-2.59102 	11.0835 	0.710808 	-2.02104 	1
+
+... (1633 rows omitted)
+
+check('tests/q12.py')
+
+All tests passed!
+Our k nearest neighbors code
+
+Remember our the k nearest neighbor code from above which wewill again use here.
+
+    def row_distance(row1, row2):
+    """The distance between two rows of a table."""
+    return distance(np.array(row1), np.array(row2))
+
+def distances(training, example, output):
+    """Compute the distance from example for each row in training."""
+    dists = []
+    attributes = training.drop(output)
+    for row in attributes.rows:
+        dists.append(row_distance(row, example))
+    return training.with_column('Distance', dists)
+
+def closest(training, example, k, output):
+    """Return a table of the k closest neighbors to example."""
+    return distances(training, example, output).sort('Distance').take(np.arange(k))
+
+Test algorithm
+
+Execute these cells to define the predict_nn function for pKa, pick an example row, predict and compare.
+
+def predict_nn(example):
+    """Return the majority class among the k nearest neighbors."""
+    k = 10
+    return np.average(closest(train.drop(1,2,3,4), example, k, 'pKa').column('pKa'))
+
+Examine 1 row in test set to try to predict
+
+test.drop(1,2,3,4).take(100)
+
+pKa 	AM1BCC partial charge (prot. atom) 	AM1BCC partial charge (deprot. atom) 	AM1BCC partial charge (prot. atoms 1 bond away) 	AM1BCC partial charge (deprot. atoms 1 bond away) 	AM1BCC partial charge (prot. atoms 2 bond away) 	AM1BCC partial charge (deprot. atoms 2 bond away) 	∆G_solv (kJ/mol) (prot-deprot) 	SASA (Shrake) 	Bond Order 	Change in Enthalpy (kJ/mol) (prot-deprot) 	num ionizable groups
+2.84 	-0.61047 	-0.81579 	0.61442 	0.92168 	-0.20741 	-0.40767 	262.189 	15.7633 	0.569293 	-0.384275 	1
+
+# Look at closest in training set to test row, need to drop pKa from test
+k = 10
+closest(train.drop(1,2,3,4), test.drop(0,1,2,3,4).row(100), k, 'pKa').select('pKa','Distance')
+
+pKa 	Distance
+2 	1.99725
+0.52 	2.17441
+2.29 	2.28656
+2.34 	2.47667
+3.42 	2.75644
+2.92 	2.76735
+4.05 	2.92231
+4.18 	3.18217
+3.5 	3.19765
+3.84 	3.28072
+If we use test data in both cases we get exact match (Distance = 0) and no training, not machine learning but matching!
+
+plot = closest(test.drop(1,2,3,4), test.drop(0,1,2,3,4).row(100), k, 'pKa').select('pKa','Distance')
+plot
+
+pKa 	Distance
+2.84 	0
+3.96 	3.1587
+3.11 	3.24792
+3.62 	3.30907
+1.75 	3.39416
+3.64 	3.7684
+1.69 	4.64734
+3.54 	4.66504
+3.9635 	4.74525
+2.96 	5.76551
+Histogram of experimental acidity to be predicted
+Question
+
+Make a histogram of acidity measured by pKa in the training data
+
+plot.hist()
+
+Question 13 Prediction time
+
+Now predict the pKa of the 10 molecule in the test_nn dataset using predict. We need to drop the experimental pKa and descriptors in the first 4 columns to create and example_nn_row with the attributes for the k nearest neighbor. Discuss the quality of the fit and the name of the name of the molecule from column 1. Repeat for two more rows and discuss the prediction quality. Keep in mind that the prediction of pKa is a very challenging task for machine learning.
+
+example_nn_row = test.drop(0,1,2,3,4).row(9)
+example_nn_row
+
+Row(AM1BCC partial charge (prot. atom)=-0.58613002412021165, AM1BCC partial charge (deprot. atom)=-0.55584001404290295, AM1BCC partial charge (prot. atoms 1 bond away)=0.63502001650631423, AM1BCC partial charge (deprot. atoms 1 bond away)=0.64261001485342883, AM1BCC partial charge (prot. atoms 2 bond away)=-0.34993998818099503, AM1BCC partial charge (deprot. atoms 2 bond away)=-0.29142999512200451, ∆G_solv (kJ/mol) (prot-deprot)=-8.4808947084960664, SASA (Shrake)=14.285450114403506, Bond Order=0.59120591625181285, Change in Enthalpy (kJ/mol) (prot-deprot)=7.634385472845703, num ionizable groups=1.0)
+
+example_nn_row_table = test.take(9) # For display and verification
+example_nn_row_table
+
+pKa 	deprotonated microstate ID 	protonated microstate ID 	deprotonated microstate smiles 	protonated microstate smiles 	AM1BCC partial charge (prot. atom) 	AM1BCC partial charge (deprot. atom) 	AM1BCC partial charge (prot. atoms 1 bond away) 	AM1BCC partial charge (deprot. atoms 1 bond away) 	AM1BCC partial charge (prot. atoms 2 bond away) 	AM1BCC partial charge (deprot. atoms 2 bond away) 	∆G_solv (kJ/mol) (prot-deprot) 	SASA (Shrake) 	Bond Order 	Change in Enthalpy (kJ/mol) (prot-deprot) 	num ionizable groups
+3.6 	b'(4-hydroxy-2-octanoyloxy-4-oxobutyl)-trimethylazanium' ... 	b'(4-hydroxy-2-octanoyloxy-4-oxobutyl)-trimethylazanium' ... 	CCCCCCCC(=O)O[C@H](CC(=O)[O-])C[N+](C)(C)C 	CCCCCCCC(=O)O[C@H](CC(=O)O)C[N+](C)(C)C 	-0.58613 	-0.55584 	0.63502 	0.64261 	-0.34994 	-0.29143 	-8.48089 	14.2855 	0.591206 	7.63439 	1
+
+predict_nn(example_nn_row)
+
+4.4989999999999997
+
+print('Experimental pKa:', test.column('pKa').item(9))
+print('Predicted pKa using nearest neighbors:', round(predict_nn(example_nn_row),2))
+
+Experimental pKa: 3.6
+Predicted pKa using nearest neighbors: 4.5
+
+example_nn_row8 = test.drop(0,1,2,3,4).row(8)
+example_nn_row8
+
+Row(AM1BCC partial charge (prot. atom)=-0.31029999300837519, AM1BCC partial charge (deprot. atom)=-0.72250002552755177, AM1BCC partial charge (prot. atoms 1 bond away)=0.33034499131143091, AM1BCC partial charge (deprot. atoms 1 bond away)=0.56497000227682292, AM1BCC partial charge (prot. atoms 2 bond away)=-0.37572750121355059, AM1BCC partial charge (deprot. atoms 2 bond away)=-0.49852750753052533, ∆G_solv (kJ/mol) (prot-deprot)=1.0282546712890621, SASA (Shrake)=11.329839745906229, Bond Order=0.70151256254408922, Change in Enthalpy (kJ/mol) (prot-deprot)=3.4610929603576506, num ionizable groups=1.0)
+
+example_nn_row8_table = test.take(8) # For display and verification
+example_nn_row8_table
+
+pKa 	deprotonated microstate ID 	protonated microstate ID 	deprotonated microstate smiles 	protonated microstate smiles 	AM1BCC partial charge (prot. atom) 	AM1BCC partial charge (deprot. atom) 	AM1BCC partial charge (prot. atoms 1 bond away) 	AM1BCC partial charge (deprot. atoms 1 bond away) 	AM1BCC partial charge (prot. atoms 2 bond away) 	AM1BCC partial charge (deprot. atoms 2 bond away) 	∆G_solv (kJ/mol) (prot-deprot) 	SASA (Shrake) 	Bond Order 	Change in Enthalpy (kJ/mol) (prot-deprot) 	num ionizable groups
+3.17 	2-methyl-4-phenoxypyrimidine_micro001 	2-methyl-4-phenoxypyrimidine_micro000 	Cc1nccc(n1)Oc2ccccc2 	Cc1[nH+]ccc(n1)Oc2ccccc2 	-0.3103 	-0.7225 	0.330345 	0.56497 	-0.375728 	-0.498528 	1.02825 	11.3298 	0.701513 	3.46109 	1
+
+predict_nn(example_nn_row8)
+
+3.8965000000000005
+
+print('Experimental pKa:', test.column('pKa').item(8))
+print('Predicted pKa using nearest neighbors:', round(predict_nn(example_nn_row8),2))
+
+Experimental pKa: 3.17
+Predicted pKa using nearest neighbors: 3.9
+
+example_nn_row2 = test.drop(0,1,2,3,4).row(2)
+example_nn_row2
+
+Row(AM1BCC partial charge (prot. atom)=-0.61339002661406994, AM1BCC partial charge (deprot. atom)=-0.85382998049259184, AM1BCC partial charge (prot. atoms 1 bond away)=0.63423997350037098, AM1BCC partial charge (deprot. atoms 1 bond away)=0.90640997827053071, AM1BCC partial charge (prot. atoms 2 bond away)=-0.3377199899405241, AM1BCC partial charge (deprot. atoms 2 bond away)=-0.52344498842954634, ∆G_solv (kJ/mol) (prot-deprot)=312.23192955716553, SASA (Shrake)=17.733662210983663, Bond Order=0.5910573468721162, Change in Enthalpy (kJ/mol) (prot-deprot)=1.316688812736617, num ionizable groups=1.0)
+
+example_nn_row2_table = test.take(2) # For display and verification
+example_nn_row2_table
+
+pKa 	deprotonated microstate ID 	protonated microstate ID 	deprotonated microstate smiles 	protonated microstate smiles 	AM1BCC partial charge (prot. atom) 	AM1BCC partial charge (deprot. atom) 	AM1BCC partial charge (prot. atoms 1 bond away) 	AM1BCC partial charge (deprot. atoms 1 bond away) 	AM1BCC partial charge (prot. atoms 2 bond away) 	AM1BCC partial charge (deprot. atoms 2 bond away) 	∆G_solv (kJ/mol) (prot-deprot) 	SASA (Shrake) 	Bond Order 	Change in Enthalpy (kJ/mol) (prot-deprot) 	num ionizable groups
+4.89 	Caprylic acid_micro001 	Caprylic acid_micro000 	CCCCCCCC(=O)[O-] 	CCCCCCCC(=O)O 	-0.61339 	-0.85383 	0.63424 	0.90641 	-0.33772 	-0.523445 	312.232 	17.7337 	0.591057 	1.31669 	1
+
+predict_nn(example_nn_row2)
+
+4.3769999999999998
+
+print('Experimental pKa:', test.column('pKa').item(2))
+print('Predicted pKa using nearest neighbors:', round(predict_nn(example_nn_row2),2))
+
+Experimental pKa: 4.89
+Predicted pKa using nearest neighbors: 4.38
+
+check('tests/q13.py')
+
+All tests passed!
+Now let's plot knn prediction success
+
+Execute the next three cells
+
+exp_pKa = make_array()
+predict_pKA = make_array()
+
+# This takes a while!
+for i in np.arange(test.num_rows):
+    exp_pKa = np.append(exp_pKa,test.column('pKa').item(i))
+    example_nn_row = test.drop(0,1,2,3,4).row(i)
+    predict_pKA = np.append(predict_pKA,predict_nn(example_nn_row) )
+
+plt.scatter(exp_pKa,predict_pKA)
+#calculate equation for regression line
+z = np.polyfit(exp_pKa,predict_pKA, 1)
+p = np.poly1d(z)
+#add trendline to plot
+plt.plot(exp_pKa, p(exp_pKa),'blue',label="{}".format(p)) # Equation of line placed in legend from label
+plt.xlabel("Experimental pKa")
+plt.ylabel("Predicted pKa")
+plt.legend(fontsize="small")
+plt.show()
+
+Conclusions on our k nearest neighbor model
+Question 14
+
+Evaluate the overall quality of our machine learning prediction based on the above plot and your 3 predictions above.
+
+The quality of the machine learning prediciton is more accurate than the other prediction systems we have used.
+
+Now we will try a few values for k to try to optimize this hyperparameter. We need a new version of predict_nn that also has an argument of k.
+
+def predict_knn(example,k):
+    """Return the majority class among the k nearest neighbors."""
+    return np.average(closest(train.drop(1,2,3,4), example, k, 'pKa').column('pKa'))
+
+for k in [5,7,10,15,20]:
+    exp_pKa = make_array()
+    predict_pKA = make_array()
+    for i in np.arange(test.num_rows):
+        exp_pKa = np.append(exp_pKa,test.column('pKa').item(i))
+        example_nn_row = test.drop(0,1,2,3,4).row(i)
+        predict_pKA = np.append(predict_pKA,predict_knn(example_nn_row,k) )
+    plt.scatter(exp_pKa,predict_pKA)
+    z = np.polyfit(exp_pKa,predict_pKA, 1)
+    p = np.poly1d(z)
+    plt.plot(exp_pKa, p(exp_pKa),'blue',label="{}".format(p)) # Equation of line placed in legend from label
+    plt.xlabel("Experimental pKa")
+    plt.ylabel("Predicted pKa")
+    plt.title("k = "+str(k))
+    plt.legend(fontsize="small")
+    plt.show()
+
+Question: Which value of k makes the best estimation?
+
+k = 20
+
+check('tests/q14.py')
+
+All tests passed!
+Extra (advanced): Try to vary the set of parameters/attributes by using fewer attributes or where choices exist such as using Gasteiger partial charges instead of AM1BCC or removing moolecular weight or other attributes.
+
+for (i, item) in enumerate(list(dblow.columns)): # List of attributes
+    print(i, item)
+
+0 pKa
+1 protonated molecule
+2 deprotonated molecule
+3 deprotonated microstate ID
+4 protonated microstate ID
+5 deprotonated microstate smiles
+6 protonated microstate smiles
+7 AM1BCC partial charge (prot. atom)
+8 AM1BCC partial charge (deprot. atom)
+9 AM1BCC partial charge (prot. atoms 1 bond away)
+10 AM1BCC partial charge (deprot. atoms 1 bond away)
+11 AM1BCC partial charge (prot. atoms 2 bond away)
+12 AM1BCC partial charge (deprot. atoms 2 bond away)
+13 Gasteiger partial charge (prot. atom)
+14 Gasteiger partial charge (deprot. atom)
+15 Gasteiger partial charge (prot. atoms 1 bond away)
+16 Gasteiger partial charge (deprot. atoms 1 bond away)
+17 Gasteiger partial charge (prot. atoms 2 bond away)
+18 Gasteiger partial charge (deprot. atoms 2 bond away)
+19 Extented Hückel partial charge (prot. atom)
+20 Extented Hückel partial charge (deprot. atom)
+21 Extented Hückel partial charge (prot. atoms 1 bond away)
+22 Extented Hückel partial charge (deprot. atoms 1 bond away)
+23 Extented Hückel partial charge (prot. atoms 2 bond away)
+24 Extented Hückel partial charge (deprot. atoms 2 bond away)
+25 ∆G_solv (kJ/mol) (prot-deprot)
+26 SASA (Shrake)
+27 SASA (Lee)
+28 Bond Order
+29 Change in Enthalpy (kJ/mol) (prot-deprot)
+30 href
+31 Weight
+32 num ionizable groups
+33 pKa source
+
+Selection of attributes
+
+molecular = Table().from_df(dblow) # Now back to Table
+molecular=molecular.select(0, 13, 14, 15, 16, 17, 18) # Change these
+molecular
+
+pKa 	Gasteiger partial charge (prot. atom) 	Gasteiger partial charge (deprot. atom) 	Gasteiger partial charge (prot. atoms 1 bond away) 	Gasteiger partial charge (deprot. atoms 1 bond away) 	Gasteiger partial charge (prot. atoms 2 bond away) 	Gasteiger partial charge (deprot. atoms 2 bond away)
+6.98 	-0.330426 	-0.297932 	0.0957107 	0.0166791 	-0.0886513 	-0.0975437
+6.95 	-0.351177 	-0.449796 	0.0560969 	-0.0911609 	-0.184015 	-0.327966
+6.95 	-0.121937 	-0.758398 	0.116007 	-0.0603184 	-0.0816854 	-0.116274
+6.95 	-0.336508 	-0.305334 	0.0779267 	-0.00142798 	-0.147065 	-0.149807
+6.95 	-0.250229 	-0.245237 	0.18369 	0.0695407 	-0.120422 	-0.187616
+6.95 	-0.33107 	-0.298704 	0.0935341 	0.0145011 	-0.0905837 	-0.0996324
+6.95 	-0.330992 	-0.298573 	0.0879519 	0.00936644 	-0.0907102 	-0.104434
+6.94 	-0.12372 	-0.760079 	0.0962981 	-0.0803155 	-0.12096 	-0.155154
+6.94 	-0.276523 	-0.36777 	0.287681 	0.1657 	-0.184195 	-0.24879
+6.92 	-0.322978 	-0.670065 	0.0535116 	-0.0879895 	0.0261593 	-0.00571535
+
+... (2035 rows omitted)
+
+Now test by copying appropriate code from above
+
+exp_pKa = make_array()
+predict_pKA = make_array()
+
+# This takes a while!
+for i in np.arange(test.num_rows):
+    exp_pKa = np.append(exp_pKa,test.column('pKa').item(i))
+    example_nn_row = test.drop(0,1,2,3,4).row(i)
+    predict_pKA = np.append(predict_pKA,predict_nn(example_nn_row) )
+
+# Plot 
+for k in [5,7,10,15,20]:
+    plt.scatter(exp_pKa,predict_pKA)
+    z = np.polyfit(exp_pKa,predict_pKA, 1)
+    p = np.poly1d(z)
+    plt.plot(exp_pKa, p(exp_pKa),'blue',label="{}".format(p)) # Equation of line placed in legend from label
+    plt.xlabel("Experimental pKa")
+    plt.ylabel("Predicted pKa")
+    plt.title("k = "+str(k))
+    plt.legend(fontsize="small")
+    plt.show()
+
+# Comments: The graphs look relatively the same 
+
+Now demonstrate knn from scikit learn
+
+scikit learn is a standard and powerful machine learning library. Below is a demonstration for your information of the same machine learning task using scikit learn. Execute the below cells.
+
+from sklearn.neighbors import KNeighborsRegressor
+from sklearn.metrics import mean_squared_error
+from sklearn.metrics import r2_score
+from sklearn.model_selection import train_test_split
+
+knn = KNeighborsRegressor(n_neighbors=15, weights='distance',p=1)
+
+X = make_array()
+attributes = train.drop('pKa',1,2,3,4)
+for i in np.arange(attributes.num_rows):
+    X=np.append(X,np.array(attributes.row(i)))
+X=X.reshape(attributes.num_rows,len(attributes))
+
+y=train.column('pKa')
+y
+
+array([ 4.7 ,  3.65,  0.7 , ...,  3.27,  3.51,  3.79])
+
+knn.fit(X,y)
+
+KNeighborsRegressor
+
+KNeighborsRegressor(n_neighbors=15, p=1, weights='distance')
+
+Now test attributes
+
+attributes = test.drop('pKa',1,2,3,4)
+Xtest = make_array()
+for i in np.arange(attributes.num_rows):
+    Xtest=np.append(Xtest,np.array(attributes.row(i)))
+Xtest=Xtest.reshape(attributes.num_rows,len(attributes))
+
+ytest=test.column('pKa')
+
+y_predicted = knn.predict(Xtest)
+predict_nn = test.with_columns("pKa predict",y_predicted)
+
+plt.scatter(ytest,y_predicted)
+#calculate equation for regression line
+z = np.polyfit(ytest,y_predicted, 1)
+p = np.poly1d(z)
+# Label with equation
+print(p)
+#add trendline to plot
+plt.plot(ytest, p(ytest),'red',label="{}".format(p))
+plt.legend(fontsize="small")
+plt.show()
+
+ 
+0.2708 x + 2.77
+
+Return the coefficient of determination of the prediction.
+
+The coefficient of determination R2
+is defined as (1−uv) u is the residual sum of squares ((y_true - y_pred)** 2).sum() and v is the total sum of squares ((y_true - y_true.mean()) ** 2).sum(). The best possible score is 1.0 and it can be negative (because the model can be arbitrarily worse). A constant model that always predicts the expected value of y, disregarding the input features, would get a R2=0.0
+
+knn.score(Xtest, ytest) # knn score 0-1 
+
+0.28382545947457238
+
+Final fancy plotting of select molecules
+Question 15
+
+Use a part of a molecular name to see if it is included in the test data and then execute the code to examine structures. Structures will be default structures if rdkit is not available.
+
+molecular_name = "methyl"
+predict_nn.where("protonated microstate ID",are.containing(molecular_name))
+
+pKa 	deprotonated microstate ID 	protonated microstate ID 	deprotonated microstate smiles 	protonated microstate smiles 	AM1BCC partial charge (prot. atom) 	AM1BCC partial charge (deprot. atom) 	AM1BCC partial charge (prot. atoms 1 bond away) 	AM1BCC partial charge (deprot. atoms 1 bond away) 	AM1BCC partial charge (prot. atoms 2 bond away) 	AM1BCC partial charge (deprot. atoms 2 bond away) 	∆G_solv (kJ/mol) (prot-deprot) 	SASA (Shrake) 	Bond Order 	Change in Enthalpy (kJ/mol) (prot-deprot) 	num ionizable groups 	pKa predict
+4.88 	cyclobutan-1,3-dicarboxlic acid-2,2-dimethyl_micro001 	cyclobutan-1,3-dicarboxlic acid-2,2-dimethyl_micro000 	CC1([C@@H](CC[C@H]1C(=O)[O-])C(=O)O)C 	CC1([C@@H](CC[C@H]1C(=O)O)C(=O)O)C 	-0.60944 	-0.84489 	0.64407 	0.92 	-0.332085 	-0.511865 	851.845 	15.517 	0.585849 	1.17415 	2 	3.83456
+6.8 	b'4-[2-[4-(phenylmethyl)piperidin-1-yl]ethylsulfonyl]phe ... 	b'4-[2-[4-(phenylmethyl)piperidin-1-yl]ethylsulfonyl]phe ... 	c1ccc(cc1)CC2CCN(CC2)CCS(=O)(=O)c3ccc(cc3)[O-] 	c1ccc(cc1)CC2CCN(CC2)CCS(=O)(=O)c3ccc(cc3)O 	-0.48485 	-0.72647 	0.19202 	0.58375 	-0.21527 	-0.32302 	212.294 	18.2263 	0.579554 	4.27772 	1 	3.70572
+3.17 	2-methyl-4-phenoxypyrimidine_micro001 	2-methyl-4-phenoxypyrimidine_micro000 	Cc1nccc(n1)Oc2ccccc2 	Cc1[nH+]ccc(n1)Oc2ccccc2 	-0.3103 	-0.7225 	0.330345 	0.56497 	-0.375728 	-0.498528 	1.02825 	11.3298 	0.701513 	3.46109 	1 	3.36406
+3.6 	b'(4-hydroxy-2-octanoyloxy-4-oxobutyl)-trimethylazanium' ... 	b'(4-hydroxy-2-octanoyloxy-4-oxobutyl)-trimethylazanium' ... 	CCCCCCCC(=O)O[C@H](CC(=O)[O-])C[N+](C)(C)C 	CCCCCCCC(=O)O[C@H](CC(=O)O)C[N+](C)(C)C 	-0.58613 	-0.55584 	0.63502 	0.64261 	-0.34994 	-0.29143 	-8.48089 	14.2855 	0.591206 	7.63439 	1 	4.58707
+6.07 	3-Trifluoromethyl-4-nitrophenol_micro001 	3-Trifluoromethyl-4-nitrophenol_micro000 	c1cc(c(cc1[O-])C(F)(F)F)[N+](=O)[O-] 	c1cc(c(cc1O)C(F)(F)F)[N+](=O)[O-] 	-0.47711 	-0.7226 	0.15476 	0.57157 	-0.153205 	-0.29586 	207.585 	18.7189 	0.606554 	3.03677 	1 	4.31251
+3.52 	3-methylsulfonyl-benzoic acid_micro001 	3-methylsulfonyl-benzoic acid_micro000 	CS(=O)(=O)c1cccc(c1)C(=O)[O-] 	CS(=O)(=O)c1cccc(c1)C(=O)O 	-0.60926 	-0.82073 	0.65081 	0.91211 	-0.350585 	-0.49094 	254.285 	16.7485 	0.571158 	3.56108 	1 	3.19138
+3.58 	3-bromo-6-methyl-benzoic acid_micro001 	3-bromo-6-methyl-benzoic acid_micro000 	Cc1ccc(cc1C(=O)[O-])Br 	Cc1ccc(cc1C(=O)O)Br 	-0.59926 	-0.82105 	0.65217 	0.90862 	-0.33155 	-0.457 	268.353 	16.2559 	0.587305 	5.81846 	1 	3.13845
+4.52 	3,4,5-trimethyl-benzoic acid_micro001 	3,4,5-trimethyl-benzoic acid_micro000 	Cc1cc(cc(c1C)C)C(=O)[O-] 	Cc1cc(cc(c1C)C)C(=O)O 	-0.60942 	-0.83344 	0.65369 	0.90784 	-0.34603 	-0.47813 	289.983 	16.7485 	0.581877 	2.46986 	1 	4.04618
+6.6 	1-amino-2-dimethylaminoethane_micro001 	1-amino-2-dimethylaminoethane_micro000 	C[NH+](C)CC[NH-] 	C[NH+](C)CCN 	-0.92615 	-0.99446 	0.18178 	0.29091 	0.03292 	-0.07909 	-249.415 	10.0983 	0.71202 	0.921486 	2 	6.28375
+4.62 	1-(p-bromophenyl)-1-methylhydrazine_micro001 	1-(p-bromophenyl)-1-methylhydrazine_micro000 	C[N@@](c1ccc(cc1)Br)[NH-] 	C[N@@](c1ccc(cc1)Br)N 	-0.58269 	-0.80044 	-0.52475 	-0.2603 	0.21546 	0.167725 	-0.996905 	10.0983 	0.724487 	0.185048 	1 	4.63809
+
+... (73 rows omitted)
+
+check('tests/q15.py')
+
+All tests passed!
+
+glycine=predict_nn.where("protonated microstate ID",are.containing(molecular_name))
+mols = [Chem.MolFromSmiles(x) for x in glycine.column("protonated microstate smiles") if x is not None]
+molde = [Chem.MolFromSmiles(x) for x in glycine.column("deprotonated microstate smiles") if x is not None]
+mol = [None] * 2 * glycine.num_rows
+mol[0::2]=mols
+mol[1::2]=molde
+label = [None] * 2 * glycine.num_rows
+lpred = [None] * 2 * glycine.num_rows
+exp = glycine.column("pKa")
+pred = glycine.column("pKa predict")
+label[0::2] = exp
+label[1::2] = exp
+lpred[0::2] = pred
+lpred[1::2] = pred
+for i,m in enumerate(mol):
+    m.SetProp("Name","pKa: "+str(np.round(label[i],2))+"  knn: "+str(np.round(lpred[i],2)))
+
+p = Draw.MolsToGridImage( [mol[x] for x in range(0,(2 * glycine.num_rows))] , legends=[x.GetProp("Name") for x in mol],molsPerRow=2,subImgSize=(300,250))
+print("\t\tProtonated","\t\t\tDeprotonated")
+p
+
+		Protonated 			Deprotonated
+
+All finished...
+
+Run checks and submit .html and .ipynb files after downloading.
+
+# For your convenience, you can run this cell to run all the tests at once!
+import glob
+from gofer.ok import check
+correct = 0
+checks = [1,2,3,4,6,7,8,11,12,13,14,15]
+total = len(checks)
+for x in checks:
+    print('Testing question {}: '.format(str(x)))
+    g = check('tests/q{}.py'.format(str(x)))
+    if g.grade == 1.0:
+        print("Passed")
+        correct += 1
+    else:
+        print('Failed')
+        display(g)
+
+print('Grade:  {}'.format(str(correct/total)))
+print("Nice work ",Your_name)
+import time;
+localtime = time.asctime( time.localtime(time.time()) )
+print("Submitted @ ", localtime)
+
+Testing question 1: 
+Passed
+Testing question 2: 
+Passed
+Testing question 3: 
+Passed
+Testing question 4: 
+Passed
+Testing question 6: 
+Passed
+Testing question 7: 
+Passed
+Testing question 8: 
+Passed
+Testing question 11: 
+Passed
+Testing question 12: 
+Passed
+Testing question 13: 
+Passed
+Testing question 14: 
+Passed
+Testing question 15: 
+Passed
+Grade:  1.0
+Nice work  Hannah Joseph
+Submitted @  Sat Apr 29 01:20:58 2023
+
