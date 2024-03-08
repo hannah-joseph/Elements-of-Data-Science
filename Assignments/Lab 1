@@ -1,0 +1,147 @@
+1. Coding Concepts
+Before starting with datasets we will develop some fundamental early concepts of coding within this Jupyter notebook.
+
+Reminders for navigating Jupyter Notebooks
+
+Cells
+In a notebook, each rectangle containing text or code is called a cell.
+
+Markdown cells
+Text cells (like this one) can be edited by double-clicking on them. They're written in a simple format called Markdown to add formatting and section headings. You don't need to learn Markdown, but you might want to.
+
+Code cells
+Code cells are, as the name implies, where we put the computer code. In code each command needs to be typed in a specific way known as syntax. Everything matters here, capitilization must match that of the given command or previously defined variable, every period, comma or any character matters and can determine the difference between smoothly running code and hours of errors!
+
+Executing cells
+After you edit a text cell, select the "run cell" button at the top that looks like ▶| to confirm any changes. You can also use a keyboard shortcut to run a cell by holding down the Ctrl key and pressing Enter.
+
+Question 1.1.1.
+print is a Python function and the argument(s) belong inside parenthesis. The print function takes a string argument such as 'This dog is my pet'. Type a meaningful message inside of quotes in place of the ellipsis in the below code cell and execute. Select the "run cell" ▶| button on the top to execute.
+
+print("It is what it is")
+It is what it is
+Initialize
+We always will load external modules to extend the functionality of the standard Python available in the Jupyter book.
+
+import numpy as np # import numpy package
+from datascience import * # Brings into Python the datascience Table object
+# These lines load the tests/checks.
+from gofer.ok import check
+# Enter your name as a string
+# Example
+dogname = "Fido"
+# Your name
+name = "Hannah"
+name
+'Hannah'
+1. Numbers
+Quantitative information arises everywhere in data science. In addition to representing commands to print out lines, expressions can represent numbers and methods of combining numbers. The expression 3.2500 evaluates to the number 3.25. (Run the cell and see.)
+
+3.2500
+3.25
+Notice that we didn't have to print. When you run a notebook cell, if the last line has a value, then Jupyter helpfully prints out that value for you. However, it won't print out prior lines automatically. If you want to print out a prior line, you need to add the print statement. Run the cell below to check.
+
+print(2)
+3
+4
+2
+4
+Above, you should see that 4 is the value of the last expression, 2 is printed, but 3 is lost forever because it was neither printed nor last.
+
+1.1. Arithmetic
+The line in the next cell subtracts. Its value is what you'd expect. Run it.
+
+3.25 - 1.5
+1.75
+Many basic arithmetic operations are built in to Python. The Inferential Thinking textbook section on Expressions describes all the arithmetic operators used in the course. The common operator that differs from typical math notation is **, which raises one number to the power of the other. So, 2**3 stands for 
+2
+3
+ and evaluates to 8.
+
+The order of operations is what you learned in elementary school, and Python also has parentheses. For example, compare the outputs of the cells below.
+
+6+6*5-6*3**2*2**3/4*7
+6+(6*5-(6*3))**2*((2**3)/4*7)
+
+Question 1
+Write a Python expression in this next cell that's equal to 5×4(10/11)−51(1/3)+2.5×22+26/33. That's five times four and ten elevenths, minus 51 and a third, plus two to the power of half of 22, plus 26 33rds.
+
+Hint: The correct output should be a familiar number.
+
+expression = 5*(4+10/11)-(51+1/3)+2**(0.5*22)+26/33
+expression
+2022.0
+# Test cell; please do not change!
+check('tests/q1.py')
+All tests passed!
+
+2. Names (may also be referred to as variables)
+In natural language, we have terminology that lets us quickly reference very complicated concepts. We don't say, "That's a large mammal with brown fur and sharp teeth!" Instead, we just say, "Bear!"
+
+Similarly, an effective strategy for writing code is to define names for data as we compute it, like a lawyer would define terms for complex ideas at the start of a legal document to simplify the rest of the writing.
+
+In Python, we do this with assignment statements. An assignment statement has a name on the left side of an = sign and an expression to be evaluated on the right.
+
+ten = 3 * 2 + 4
+When you run that cell, Python first evaluates the first line. It computes the value of the expression 3 * 2 + 4, which is the number 10. Then it gives that value the name ten. At that point, the code in the cell is done running.
+
+After you run that cell, the value 10 is bound to the name ten:
+
+ten
+The statement ten = 3 * 2 + 4 is not asserting that ten is already equal to 3 * 2 + 4, as we might expect by analogy with math notation. Rather, that line of code changes what ten means; it now refers to the value 10, whereas before it meant nothing at all.
+
+If the designers of Python had been ruthlessly pedantic, they might have made us write
+
+define the name ten to hereafter have the value of 3 * 2 + 4 
+
+instead. You will probably appreciate the brevity of "="! But keep in mind that this is the real meaning.
+
+2.1 Syntax and Style
+A common pattern in Jupyter notebooks is to assign a value to a name and then immediately evaluate the name in the last line in the cell so that the value is displayed as output.
+
+close_to_pi = 355/113
+close_to_pi
+Another common pattern is that a series of lines in a single cell will build up a complex computation in stages, naming the intermediate results. This is good style particularly when beginning as it allows for easy reading and identification of steps in problem solving.
+
+bimonthly_salary = 840
+monthly_salary = 2 * bimonthly_salary
+number_of_months_in_a_year = 12
+yearly_salary = number_of_months_in_a_year * monthly_salary
+yearly_salary
+Note you could have named these variables however you wanted, as long as the name started out with a letter.
+
+However, names are very important for making your code readable to yourself and others. The cell above is shorter, but it's totally useless without an explanation of what it does.
+
+According to a famous joke among computer scientists, naming things is one of the two hardest problems in computer science. (The other two are cache invalidation and "off-by-one" errors. And people say computer scientists have an odd sense of humor...)
+
+Question 2
+Assign the name seconds_since_2000 to the number of seconds between midnight January 1, 2000 and midnight January 1, 2022. Use Python to perform any required arithmetic.
+
+Hint 1: If you're stuck, the next section shows you how to get hints. Hint 2: There are 6 leap years between 2000 and 2022.
+
+# Change the next line so that it computes the number of
+# seconds in the last 22 years and assigns that number the name
+# seconds_since_2000
+days_per_year = 365
+days_per_leap_year= 366
+hours_per_day = 24
+minute_per_hour = 60
+seconds_per_minute = 60
+leap_years_since_2000 = 6
+years_since_2000 = 16
+seconds_since_2000 = years_since_2000 * days_per_year * hours_per_day * minute_per_hour * seconds_per_minute + (leap_years_since_2000*days_per_leap_year * hours_per_day * minute_per_hour * seconds_per_minute) 
+
+# We've put this line in this cell so that it will print
+# the value you've given to seconds_since_2000 when you
+# run it.  You don't need to change this.
+seconds_since_2000
+694310400
+Running the following cell will test whether you have assigned seconds_since_2000 correctly in Question 2.
+
+Sometimes the tests will give hints about what went wrong. If the test doesn't pass, read the output, adjust your answer to the question, run the answer cell again to update the name seconds_since_2000, then run this test cell again.
+
+Sometimes the tests will tell you the answer. Rather than copying the answer, try to understand how it was reached.
+
+# Test cell; please do not change!
+check('tests/q2.py')
+All tests passed!
