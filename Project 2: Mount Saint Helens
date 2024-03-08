@@ -1,0 +1,397 @@
+mini-project II
+Elements of Data Science
+
+# Enter your name as a string
+name = "Hannah"
+name
+'Hannah'
+import numpy as np
+from datascience import *
+%matplotlib inline
+import matplotlib.pyplot as plt
+plt.style.use('fivethirtyeight')
+# Fix for datascience plots
+import collections as collections
+import collections.abc as abc
+collections.Iterable = abc.Iterable
+Mount Saint Helens Eruption 8:32 A.M. on May 18, 1980
+We will explore data on ecosystem recovery following the volcanic eruption at Mount Saint Helens in Washington State.
+
+
+
+Data Sets
+Mount Saint Helens erupted at 8:32 A.M. on May 18, 1980.
+
+
+Professor Roger del Morales at University of Washington https://faculty.washington.edu/moral/ and his team set up circular, 9 meter radius, land plots near the volcano once it was safe to initiate the study in 1984. These plots are located in several distinct regions near the volcano cone to study the return of vegatation to these plots located in different positions relative to the colcanic cone (see mapping below). We will use this data to assess the rate of plant succession. Measures included in the data include yearly species richness, *RICHNESS*, defined as the number of species in a given region or in this case the 9 meter radius (250 m^2) land plot. We will use our data science tools to decide if the changes over time in *RICHNESS* are a pattern (Alternate hypothesis) or if they are just due to random fluctutaions (NULL hypothesis). Other variables include *COVER_%* which can also be analyzed.
+Data collected:
+
+del Moral, Roger (2016): Thirty years of permanent vegetation plots, Mount St. Helens, Washington, USA. Wiley. Collection. https://doi.org/10.6084/m9.figshare.c.3303093.v1
+Source: https://figshare.com/collections/Thirty_years_of_permanent_vegetation_plots_Mount_St_Helens_Washington_USA/3303093
+
+A papers using this data:
+
+Del Moral, R.; Magnússon, B., "Surtsey and Mount St. Helens: a comparison of early succession rates". Biogeosciences 2014, 11 (7), 2099-2111.
+https://faculty.washington.edu/moral/publications/2014%20delMoral%20Magnusson.pdf
+
+Cook, James E.; Halpern, Charles B., "Vegetation changes in blown-down and scorched forests 10–26 years after the eruption of Mount St. Helens, Washington, USA". Plant Ecology 2018, 219 (8), 957-972.
+https://link.springer.com/content/pdf/10.1007/s11258-018-0849-8.pdf
+
+Mini project Goals and Rubric
+Create initial data tables and plots to explore the nature of the different plots included in "data/MSH_PLOT_DESCRIPTORS2.csv". Variables to consider include elevation, slope, aspect (direction), impact type. You could use group or pivot methods here.
+Identify two PLOT_CODEs to study based on mapped location and characteristics given in "data/MSH_PLOT_DESCRIPTORS2.csv" file. Use a markdown cell to provide reasons for your two choices of plots. Include differences and similarities.
+Carry out exploratory data analysis on the yearly data included in "data/MSH_STRUCTURE_PLOT_YEAR.csv" for each of the identified plots.
+Formulate a hypothesis regarding plant vegation (COVER_%) and variety (RICHNESS) following the eruption. You can refer to the above links and papers for ideas. Create a detailed markdown cell to detail this hypothesis.
+State the NULL hypothesis for each measure.
+Formulate a data science plan to simulate random changes following the first year of data.
+Compare the the results of 1000+ simulations to the outcome.
+Identify a good test statistic such as positive and negative changes or other.
+Statistically test whether data supports the alternate hypothesis
+Compute a P-value. (Hint: you can use np.count_nonzero())
+Using a 5% P-value cutoff, draw a conclusion about the null and alternative hypotheses.
+Describe your findings using simple, non-technical language.
+Examine data for a second PLOT_CODE and repeat proceedure.
+Sum up your observations in a large markdown cell.
+# Plot description dataset
+datafile = "data/MSH_PLOT_DESCRIPTORS2.csv"
+MSH_PLOT = Table.read_table(datafile)
+MSH_PLOT
+PLOT_NAME	PLOT_CODE	FIRST_YEAR	LAST_YEAR	UTMGRID	UTMEAST	UTMNORTH	LONG	LAT	POT._RAD.	HEAT_LOAD	ELEVATION(M)	ASPECT	SLOPE	IMPACT_TYPE	SUCCESSION_TYPE
+Toutle Ridge10	TORD10	1981	1996	10T	559724	5118180	122.226	46.2146	0.769	0.796	1430	N	11	Blast edge	Secondary
+Toutle Ridge09	TORD09	1981	1997	10T	559599	5118216	122.227	46.2149	0.722	0.827	1417	NW	18	Blast edge	Secondary
+Toutle Ridge08	TORD08	1981	1997	10T	559565	5118281	122.228	46.2155	0.788	0.833	1401	NNW	10	Blast edge	Secondary
+Toutle Ridge07	TORD07	1981	1997	10T	559466	5118302	122.229	46.2157	0.756	0.786	1379	N	12	Blast edge	Secondary
+Toutle Ridge06	TORD06	1981	1997	10T	559413	5118329	122.23	46.2159	0.835	0.877	1365	NW	7	Blast edge	Secondary
+Toutle Ridge05	TORD05	1981	1997	10T	559342	5118366	122.231	46.2163	0.822	0.854	1352	NNW	7	Blast edge	Secondary
+Toutle Ridge04	TORD04	1981	1997	10T	559279	5115125	122.232	46.1871	0.764	0.818	1340	NNW	12	Blast edge	Secondary
+Toutle Ridge03	TORD03	1981	1997	10T	559238	5118483	122.232	46.2173	0.764	0.818	1320	NNW	12	Blast edge	Secondary
+Toutle Ridge02	TORD02	1981	1997	10T	559091	5118480	122.234	46.2173	0.861	0.9	1294	WNW	6	Blast edge	Secondary
+Toutle Ridge01	TORD01	1981	1997	10T	558992	5118569	122.235	46.2181	0.874	0.9	1280	WNW	4	Blast edge	Secondary
+... (82 rows omitted)
+
+Question 1: Create initial data tables and plots.
+datatable= MSH_PLOT.group(['IMPACT_TYPE','ASPECT'])
+datatable
+IMPACT_TYPE	ASPECT	count
+Blast	N	3
+Blast	N	5
+Blast	NE	9
+Blast	NNE	3
+Blast edge	N	2
+Blast edge	NNW	4
+Blast edge	NW	2
+Blast edge	WNW	2
+Blast; Scour; Pumice	E	10
+Blast; pumice	NW	12
+... (14 rows omitted)
+
+datatable2 = MSH_PLOT.group(['ELEVATION(M)', 'SLOPE'])
+datatable2
+print(datatable2)
+
+datatable2.scatter('ELEVATION(M)', 'SLOPE')
+ELEVATION(M) | SLOPE | count
+1218         | 14    | 1
+1228         | 13    | 1
+1237         | 12    | 1
+1248         | 4     | 1
+1250         | 2     | 1
+1252         | 11    | 1
+1256         | 4     | 1
+1259         | 3     | 1
+1268         | 1     | 1
+1269         | 1     | 1
+... (77 rows omitted)
+
+datatable3 = MSH_PLOT.group(['ELEVATION(M)', 'IMPACT_TYPE'])
+datatable3
+ELEVATION(M)	IMPACT_TYPE	count
+1218	Blast	1
+1228	Blast	1
+1237	Blast	1
+1248	Blast; pumice	1
+1250	Blast; pumice	1
+1252	Blast	1
+1256	Blast; pumice	1
+1259	Blast; pumice	1
+1268	Blast; pumice	1
+1269	Blast; pumice	1
+... (76 rows omitted)
+
+datatable4 = MSH_PLOT.group(['ASPECT', 'SLOPE'])
+datatable4
+print(datatable4)
+datatable4.scatter('ASPECT', 'SLOPE')
+ASPECT | SLOPE | count
+E      | 2     | 10
+E      | 15    | 2
+ENE    | 11    | 1
+ENE    | 17    | 1
+ESE    | 9     | 1
+ESE    | 13    | 2
+ESE    | 15    | 1
+ESE    | 16    | 1
+N      | 11    | 1
+N      | 12    | 3
+... (54 rows omitted)
+
+Question 2: Identify two PLOT_CODEs to study based on mapped location and characteristics given in "data/MSH_PLOT_DESCRIPTORS2.csv" file. Use a markdown cell to provide reasons for your two choices of plots. Include differences and similarities.
+The plot codes that I will be using to study are LAHR02 and TORD10. The two plots shows many differences of such as the Impact type for Lahar 02 is Lahar-thick deposit, while for Toutle Ridge10 is Blast Edge. Another difference is the Aspect, which for Lahar 02, it is located West and for Toutle Ridge 10, it is located North. However, there are similarities for both plots, such as the Elevations. For Lahar 02, the elevation is 1460 while the elevation for Toutle Ridge10 is 1430.
+Biodiversity Data Collected following Mount Saint Helens Eruption
+Data is collected anually on on developing biodiversity on defined plots of land with given latitude and longitude. Thes locations can be mapped using the map_table method of a table object. There are several related plots in different regions of the volcanic cone. Zoom in on map, click on each circle to view the label for the data series and select one of the datasets for further analysis.
+
+MSH_PLOT = MSH_PLOT.with_columns('NLONG',-1*(MSH_PLOT.column('LONG')))
+MSH_map = MSH_PLOT.select('LAT', 'NLONG', 'PLOT_CODE').relabel('PLOT_CODE', 'labels')
+Circle.map_table(MSH_map, color='blue',area=200)
+Make this Notebook Trusted to load map: File -> Trust Notebook
+# Plot vegatation trend yearly dataset
+datafile = "data/MSH_STRUCTURE_PLOT_YEAR.csv"
+MSH_YEAR = Table.read_table(datafile)
+MSH_YEAR
+PLOT_ID	PLOT_NAME	PLOT_NUMBER	YEAR	RICHNESS	COVER_%	HPRIME	EVENNESS	FREQUENCY
+ABPL011995	ABPL	1	1995	14	2.2	2.41	0.913	7.7
+ABPL011996	ABPL	1	1996	17	2.9	2.524	0.891	8.1
+ABPL011997	ABPL	1	1997	18	4.2	2.231	0.772	11.6
+ABPL011999	ABPL	1	1999	19	5.9	2.268	0.77	14.2
+ABPL012000	ABPL	1	2000	17	6.2	2.111	0.745	9.1
+ABPL012001	ABPL	1	2001	16	20.3	1.721	0.621	11.3
+ABPL012002	ABPL	1	2002	13	7.2	1.715	0.669	14.5
+ABPL012003	ABPL	1	2003	13	6.1	2.008	0.783	17.7
+ABPL012004	ABPL	1	2004	12	6.3	1.826	0.735	18.9
+ABPL012005	ABPL	1	2005	8	4.9	1.491	0.717	20.8
+... (1733 rows omitted)
+
+np.unique(MSH_YEAR.column('PLOT_NAME')) #Return unique plot names
+array(['ABPL', 'BUCA', 'BUCB', 'BUCC', 'BUCD', 'LAHR', 'PICA', 'PICB',
+       'PICE', 'PUPL', 'SFTR', 'STRD', 'TORD'],
+      dtype='<U4')
+np.unique(MSH_YEAR.column('YEAR')) #Return unique plot names
+array([1980, 1981, 1982, 1983, 1984, 1985, 1986, 1987, 1988, 1989, 1990,
+       1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998, 1999, 2000, 2001,
+       2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009])
+# Select a particular plot name based on examination of mapped data and descriptions in the plot description dataset.
+LAHRPLT = 'LAHR'
+LAHRdata = MSH_YEAR.where('PLOT_NAME',are.contained_in(LAHRPLT)).sort('YEAR',descending=False)
+LAHRdata
+PLOT_ID	PLOT_NAME	PLOT_NUMBER	YEAR	RICHNESS	COVER_%	HPRIME	EVENNESS	FREQUENCY
+LAHR011982	LAHR	1	1982	2	0.2	0.693	1	1
+LAHR021982	LAHR	2	1982	2	0.2	0.693	1	1
+LAHR041982	LAHR	4	1982	2	0.2	0.693	1	3
+LAHR051982	LAHR	5	1982	2	0.2	0.693	1	3.5
+LAHR061982	LAHR	6	1982	5	0.5	1.609	1	3
+LAHR071982	LAHR	7	1982	2	0.2	0.693	1	2
+LAHR081982	LAHR	8	1982	3	0.3	1.099	1	2
+LAHR011983	LAHR	1	1983	2	0.2	0.693	1	1
+LAHR021983	LAHR	2	1983	3	0.3	1.099	1	1
+LAHR041983	LAHR	4	1983	2	0.2	0.693	1	3
+... (155 rows omitted)
+
+LAHRdata.scatter('YEAR','RICHNESS')
+
+LAHRMEAN= MSH_YEAR.where('PLOT_NAME','LAHR').group("YEAR",np.mean)
+LAHRMEAN
+YEAR	PLOT_ID mean	PLOT_NAME mean	PLOT_NUMBER mean	RICHNESS mean	COVER_% mean	HPRIME mean	EVENNESS mean	FREQUENCY mean
+1982			4.71429	2.57143	0.257143	0.881857	1	2.21429
+1983			4.71429	3.14286	0.314286	1.046	1	2.24286
+1984			4.71429	6	0.8	1.62629	0.946143	1.9
+1985			4.71429	9.42857	1.21429	2.06786	0.930571	1.88571
+1986			4.71429	11.8571	1.55714	2.24129	0.917571	3.88571
+1987			4.71429	11.7143	1.48571	2.30514	0.941429	3.42857
+1988			4.71429	14.5714	2.61429	2.26943	0.854143	5.07143
+1989			4.71429	16	3.2	2.32614	0.842857	5.32857
+1990			4.71429	15.8571	4.52857	2.07386	0.751286	6.35714
+1991			4.71429	17.8571	5.94286	2.095	0.728	7.71429
+... (16 rows omitted)
+
+MSH_YEAR.where('PLOT_NAME','LAHR').group("YEAR",np.mean).scatter("YEAR", "RICHNESS mean")
+
+MSH_YEAR.where('PLOT_NAME','LAHR').group("YEAR",np.mean).scatter("YEAR", "COVER_% mean")
+
+# Select a particular plot name based on examination of mapped data and descriptions in the plot description dataset.
+TORDPLT = 'TORD' # Put the name for study here, i.e ='STRD'
+TORDdata = MSH_YEAR.where('PLOT_NAME',are.contained_in(TORDPLT)).sort('YEAR',descending=False)
+TORDdata
+PLOT_ID	PLOT_NAME	PLOT_NUMBER	YEAR	RICHNESS	COVER_%	HPRIME	EVENNESS	FREQUENCY
+TORD11981	TORD	1	1981	2	4.1	0.115	0.165	6.5
+TORD21981	TORD	2	1981	8	1.7	1.793	0.862	4.2
+TORD31981	TORD	3	1981	10	3.3	1.481	0.643	4.4
+TORD41981	TORD	4	1981	8	1.7	1.692	0.813	8.5
+TORD51981	TORD	5	1981	9	2.1	1.457	0.663	4
+TORD61981	TORD	6	1981	6	0.6	1.792	1	4.2
+TORD71981	TORD	7	1981	5	4.6	1.043	0.648	14
+TORD81981	TORD	8	1981	6	0.7	1.748	0.976	1.5
+TORD91981	TORD	9	1981	7	4.2	1.375	0.707	9.6
+TORD101981	TORD	10	1981	8	3.1	1.562	0.751	4.3
+... (79 rows omitted)
+
+TORDdata.scatter('YEAR','RICHNESS')
+
+TORDMEAN= MSH_YEAR.where('PLOT_NAME','TORD').group("YEAR",np.mean)
+TORDMEAN
+YEAR	PLOT_ID mean	PLOT_NAME mean	PLOT_NUMBER mean	RICHNESS mean	COVER_% mean	HPRIME mean	EVENNESS mean	FREQUENCY mean
+1981			5.5	6.9	2.61	1.4058	0.7228	6.12
+1982			5.5	11.2	7.39	1.374	0.5685	8.17
+1983			5.5	10.8	6.53	1.6687	0.7055	6.79
+1984			5.5	12.2	7.3	1.5582	0.6329	7.06
+1986			5.5	12.1	9.86	1.5854	0.6452	12.85
+1987			5.5	11.8	15.69	1.23	0.501	17.39
+1994			5.5	13.9	22.25	1.6617	0.6457	26.89
+1996			5	15.5556	19.4333	1.76733	0.660222	24.6
+1997			5.5	15.5	20.23	1.8245	0.6769	27.45
+MSH_YEAR.where('PLOT_NAME','TORD').group("YEAR",np.mean).scatter("YEAR", "RICHNESS mean")
+
+MSH_YEAR.where('PLOT_NAME','TORD').group("YEAR",np.mean).scatter("YEAR", "COVER_% mean")
+
+Question 4. Formulate a hypothesis regarding plant vegation (COVER_%) and variety (RICHNESS) following the eruption. You can refer to the above links and papers for ideas. Create a detailed markdown cell to detail this hypothesis.
+Hypothesis: Following the eruption of Mount Saint Helens in 1980, the significant increase in variety (RICHNESS) and (COVER_%) over time are a pattern and not just due to random fluctuations.
+From the article written by del Moral et al., it discusses how the initial disturbance caused by the eruption of Mount Saint Helens in 1980 created open areas that were colonized by early successional plant species. The areas that were once taken over by the successional plant species were then replaced by more shade-tolerant species. This led to an increase in species diversity over time. Additionally, the study also found that plant cover increased over time, which supports the idea that there was an increase in resources for plant growth as a result of the eruption.
+
+Question 5: State the NULL hypothesis for each measure.
+RICHNESS: The null hypothesis for plant variety (RICHNESS) would be that there is no significant change and that the land plots near Mount Saint Helens are due to random fluctuations and are not a pattern.
+COVER_%: The null hypothesis for plant vegetation coverage would be that there is no significant change and that the land plots near Mount Saint Helens are due to random fluctuations and are not a pattern.
+Question 6: Formulate a data science plan to simulate random changes following the first year of data.
+Gather data: Collect the data on species richness over time and cover percentage over time from the Mount Saint Helens land plots, LAHR02 and TORD02.
+
+Simulate random changes: Using the data from the first year, simulate random changes by randomly selecting a year and increasing or decreasing the species richness value by a random amount and repeat this process for a large number of iterations, such as 10000.
+
+Calculate the test statistic: Determine test statistic takes the difference between the number of years in which there was a significant increase in species richness and cover percentage minus the number of years in which there was a significant decrease.
+
+Calculate the p-value: Calculate the p-value, which is the probability of observing a test statistic as extreme as the one observed under the null hypothesis. If the p-value is less than or equal to the 0.05, the null hypothesis is rejected. If the p-value is greater than 0.05, the null hypothesis is accepted.
+
+Question 7: Compare the the results of 1000+ simulations to the outcome.
+LAHR02_year_data = LAHRdata.where('PLOT_NUMBER', are.equal_to(2)).sort('YEAR',descending=False).select('YEAR','RICHNESS','COVER_%')
+LAHR02_year_data
+YEAR	RICHNESS	COVER_%
+1982	2	0.2
+1983	3	0.3
+1984	7	0.7
+1985	11	1.1
+1986	13	1.5
+1987	11	1.3
+1988	17	2.1
+1989	19	2.4
+1990	18	4.6
+1991	19	5
+... (15 rows omitted)
+
+def diff_n(values, n):
+    return np.array(values)[n:] - np.array(values)[:-n]
+def changes(array, years = 1):
+    "Return the number of increases minus the number of decreases after one year."
+    differences = diff_n(array, years)
+    increase = np.count_nonzero(differences > 0)
+    decrease = np.count_nonzero(differences < 0)
+    return increase - decrease
+ uniform = Table().with_columns(
+        "Change", make_array('Increase', 'Decrease'),
+        "Chance", make_array(0.5,        0.5))
+print(uniform)
+Change   | Chance
+Increase | 0.5
+Decrease | 0.5
+def simulate_under_null(num_chances_to_change):
+    uniform = Table().with_columns(
+        "Change", make_array('Increase', 'Decrease'),
+        "Chance", make_array(0.5,        0.5))
+    sample = uniform.sample_from_distribution('Chance', num_chances_to_change)     
+    increases = sample.column("Chance sample").item(0) 
+    decreases = sample.column("Chance sample").item(1)  
+    return increases - decreases  
+def empirical_distribution(tbl,iterations):
+    num_changes = tbl.num_rows 
+    samples = make_array()
+    for i in np.arange(iterations):
+        samples = np.append(samples, simulate_under_null(num_changes)) 
+    Table().with_column('Test statistic under null', samples).hist(bins=np.arange(min(samples), max(samples) + max(samples) , 2))
+    return samples
+LAHRsamples = empirical_distribution(LAHR02_year_data, 10000)
+
+Question 8: Identify a good test statistic such as positive and negative changes or other.
+LAHR_richness_teststat = changes(LAHR02_year_data.column('RICHNESS'))
+LAHR_richness_teststat
+print('Total increases minus total decreases, across LAHR02 Richness:', LAHR_richness_teststat)
+Total increases minus total decreases, across LAHR02 Richness: 5
+LAHR_coverpercent_teststat = changes(LAHR02_year_data.column('COVER_%'))
+LAHR_coverpercent_teststat
+print('Total increases minus total decreases, across LAHR02 COVER_%:', LAHR_coverpercent_teststat)
+Total increases minus total decreases, across LAHR02 COVER_%: 16
+Question 9: Statistically test whether data supports the alternate hypothesis. Compute a P-value. Using a 5% P-value cutoff, draw a conclusion about the null and alternative hypotheses. Describe your findings using simple, non-technical language.
+LAHR02_Richness_pvalue = np.count_nonzero(LAHRsamples>LAHR_richness_teststat)/len(LAHRsamples)
+LAHR02_Richness_pvalue
+print('P-value of LAHR02 Richness:', LAHR02_Richness_pvalue)
+print('Null hypothesis is rejected.')
+P-value of LAHR02 Richness: 0.1143
+Null hypothesis is rejected.
+LAHR02_coverpercent_pvalue = np.count_nonzero(LAHRsamples>LAHR_coverpercent_teststat)/len(LAHRsamples)
+LAHR02_coverpercent_pvalue
+print('P-value of LAHR02 COVER_%:', LAHR02_coverpercent_pvalue)
+print('Null hypothesis is accepted.')
+P-value of LAHR02 COVER_%: 0.0002
+Null hypothesis is accepted.
+Based on the 5% P-value cutoff, the null hypothesis for LAHR02 COVER_% is accepted but rejected for RICHNESS, which means that the changes in COVER_% over time are due to random fluctuations and not a pattern. However, for RICHNESS, the null is accepted which indicates that the changes in these variables are not just due to chance, but there is a pattern in their fluctuations over time.
+
+Question 10: Examine data for a second PLOT_CODE and repeat procedure.
+TORD02_year_data = TORDdata.where('PLOT_NUMBER', are.equal_to(2)).sort('YEAR',descending=False).select('YEAR','RICHNESS','COVER_%')
+TORD02_year_data
+YEAR	RICHNESS	COVER_%
+1981	8	1.7
+1982	12	5.6
+1983	14	6.1
+1984	13	8.1
+1986	11	11.4
+1987	11	13.3
+1994	16	28.4
+1996	22	28.3
+1997	21	28.7
+def simulate_under_null(num_chances_to_change):
+    uniform = Table().with_columns(
+        "Change", make_array('Increase', 'Decrease'),
+        "Chance", make_array(0.5,        0.5))
+    sample = uniform.sample_from_distribution('Chance', num_chances_to_change)     
+    increases = sample.column("Chance sample").item(0) 
+    decreases = sample.column("Chance sample").item(1)  
+    return increases - decreases  
+def empirical_distribution(tbl,iterations):
+    num_changes = tbl.num_rows 
+    samples = make_array()
+    for i in np.arange(iterations):
+        samples = np.append(samples, simulate_under_null(num_changes)) 
+    Table().with_column('Test statistic under null', samples).hist(bins=np.arange(min(samples), max(samples) + max(samples) , 2))
+    return samples
+TORDsamples = empirical_distribution(TORD02_year_data, 10000)
+
+TORD_richness_teststat = changes(TORD02_year_data.column('RICHNESS'))
+TORD_richness_teststat
+print('Total increases minus total decreases, across TORD02 Richness:', TORD_richness_teststat)
+Total increases minus total decreases, across TORD02 Richness: 1
+TORD_coverpercent_teststat = changes(TORD02_year_data.column('COVER_%'))
+TORD_coverpercent_teststat
+print('Total increases minus total decreases, across TORD02 COVER_%:', TORD_coverpercent_teststat)
+Total increases minus total decreases, across TORD02 COVER_%: 6
+TORD02_Richness_pvalue = np.count_nonzero(TORDsamples>TORD_richness_teststat)/len(TORDsamples)
+TORD02_Richness_pvalue
+print('P-value of TORD02 Richness:', TORD02_Richness_pvalue)
+print('Null hypothesis is rejected.')
+P-value of TORD02 Richness: 0.2521
+Null hypothesis is rejected.
+TORD02_coverpercent_pvalue = np.count_nonzero(TORDsamples>TORD_coverpercent_teststat)/len(TORDsamples)
+TORD02_coverpercent_pvalue
+print('P-value of TORD02 COVER_%:',TORD02_coverpercent_pvalue)
+print('Null hypothesis is accepted.')
+P-value of TORD02 COVER_%: 0.0194
+Null hypothesis is accepted.
+Based on the 5% P-value cutoff, the null hypothesis for TORD02 COVER_% is accepted but rejected for RICHNESS, which means that the changes in COVER_% over time are due to random fluctuations and not a pattern. However, for RICHNESS, the null is accepted which indicates that the changes in these variables are not just due to chance, but there is a pattern in their fluctuations over time.
+
+Question 11:Sum up your observations in a large markdown cell.
+The data science plan was formulated to assess the rate of plant succession using the yearly plant variation and cover percentage. The null hypothesis for plant variation was that there is no significant change in the number of plant species over time. The null hypothesis for plant vegetation would be that there is no significant change in the proportion of ground covered by vegetation over time.
+
+Then the hypothesis testing was conducted and calculated the p-values for each variable in each plot code. For TORD02, the null is rejected for Richness and the null is accepted for cover percentage. Similarily for LAHR02, the null hypothesis is rejected for Richness and the null is accepted for cover percentage.
+
+With the observations, it is suggested that following the eruption of Mount Saint Helens in 1980, there is a pattern in the changes in plant variation over time for both plots, TORD02 and LAHR02, while the changes in ground coverage are just due to random fluctuations such as the type of vegetation, climate conditions, and location of the plots.
+
+# Last cell to execute
+import datetime
+now = datetime.datetime.now()
+now = now.strftime('%H:%M:%S on %A, %B the %dth, %Y')
+print(" Submitted by ", name, " at ", now )
+ Submitted by  Hannah  at  00:33:59 on Wednesday, April the 05th, 2023
