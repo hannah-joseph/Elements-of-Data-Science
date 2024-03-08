@@ -1,0 +1,502 @@
+Olympics Data mini-project
+Temple Elements of Data Science In this mini-project you will draw on your new found skills from Module 1 of the course, Have Fun! The description of the mini-project and it's goals is given here
+
+# Enter your name as a string
+name = "Hannah Joseph"
+name
+'Hannah Joseph'
+# Extra Python functionality to import
+from datascience import *  # datascience Table 
+
+import numpy as np
+import pandas as pd
+%matplotlib inline
+import matplotlib.pyplot as plt
+plt.style.use('fivethirtyeight')
+# Fix for datascience plots
+import collections as collections
+import collections.abc as abc
+collections.Iterable = abc.Iterable
+Data Sets
+Athletes: Olympic_Data/athlete_events.csv Source: Kaggle https://www.kaggle.com/heesoo37/120-years-of-olympic-history-athletes-and-results
+
+datafile = "Olympic_Data/winter_athletes.csv"
+athletes = Table.read_table(datafile).sort("Year",descending=True).where("Season","Winter")
+athletes
+ID	Name	Sex	Age	Height	Weight	Team	NOC	Games	Year	Season	City	Sport	Event	Medal
+16	Juhamatti Tapio Aaltonen	M	28	184	85	Finland	FIN	2014 Winter	2014	Winter	Sochi	Ice Hockey	Ice Hockey Men's Ice Hockey	Bronze
+126	Forough Abbasi	F	20	164	58	Iran	IRI	2014 Winter	2014	Winter	Sochi	Alpine Skiing	Alpine Skiing Women's Slalom	nan
+145	Jeremy Abbott	M	28	175	70	United States	USA	2014 Winter	2014	Winter	Sochi	Figure Skating	Figure Skating Men's Singles	nan
+145	Jeremy Abbott	M	28	175	70	United States	USA	2014 Winter	2014	Winter	Sochi	Figure Skating	Figure Skating Mixed Team	Bronze
+463	Agnese boltia	F	17	166	60	Latvia	LAT	2014 Winter	2014	Winter	Sochi	Alpine Skiing	Alpine Skiing Women's Super G	nan
+463	Agnese boltia	F	17	166	60	Latvia	LAT	2014 Winter	2014	Winter	Sochi	Alpine Skiing	Alpine Skiing Women's Giant Slalom	nan
+463	Agnese boltia	F	17	166	60	Latvia	LAT	2014 Winter	2014	Winter	Sochi	Alpine Skiing	Alpine Skiing Women's Slalom	nan
+532	Iason Abramashvili	M	25	176	82	Georgia	GEO	2014 Winter	2014	Winter	Sochi	Alpine Skiing	Alpine Skiing Men's Giant Slalom	nan
+532	Iason Abramashvili	M	25	176	82	Georgia	GEO	2014 Winter	2014	Winter	Sochi	Alpine Skiing	Alpine Skiing Men's Slalom	nan
+534	Oleksandr Volodymyrovych Abramenko	M	25	180	82	Ukraine	UKR	2014 Winter	2014	Winter	Sochi	Freestyle Skiing	Freestyle Skiing Men's Aerials	nan
+... (48554 rows omitted)
+
+Mini-Project
+Now develop your project to address goals given in the linked document. Feel free to expand the project to explore ideas of interest.
+
+Stage 1:
+1. What is the earliest year for a Winter Olympic in this data set?
+1924
+earliest_year = athletes.sort("Year",descending=False)
+earliest_year
+ID	Name	Sex	Age	Height	Weight	Team	NOC	Games	Year	Season	City	Sport	Event	Medal
+391	Clarence John Abel	M	23	185	102	United States	USA	1924 Winter	1924	Winter	Chamonix	Ice Hockey	Ice Hockey Men's Ice Hockey	Silver
+992	Josef Adolf	M	25	nan	nan	Czechoslovakia	TCH	1924 Winter	1924	Winter	Chamonix	Nordic Combined	Nordic Combined Men's Individual	nan
+1077	Xavier Affentranger	M	26	nan	nan	Switzerland	SUI	1924 Winter	1924	Winter	Chamonix	Ski Jumping	Ski Jumping Men's Normal Hill, Individual	nan
+1077	Xavier Affentranger	M	26	nan	nan	Switzerland	SUI	1924 Winter	1924	Winter	Chamonix	Cross Country Skiing	Cross Country Skiing Men's 18 kilometres	nan
+1077	Xavier Affentranger	M	26	nan	nan	Switzerland	SUI	1924 Winter	1924	Winter	Chamonix	Nordic Combined	Nordic Combined Men's Individual	nan
+1341	Johan Petter hln (Andersson-)	M	44	nan	nan	Sweden	SWE	1924 Winter	1924	Winter	Chamonix	Curling	Curling Men's Curling	Silver
+2329	Louis Albert	M	25	nan	nan	France	FRA	1924 Winter	1924	Winter	Chamonix	Ski Jumping	Ski Jumping Men's Normal Hill, Individual	nan
+2431	Henri Eugne Aldebert	M	43	nan	nan	France-1	FRA	1924 Winter	1924	Winter	Chamonix	Bobsleigh	Bobsleigh Men's Four/Five	nan
+2902	Karl Ruben Allinger	M	32	nan	nan	Sweden	SWE	1924 Winter	1924	Winter	Chamonix	Ice Hockey	Ice Hockey Men's Ice Hockey	nan
+2939	Ernst Alm	M	23	174	nan	Sweden	SWE	1924 Winter	1924	Winter	Chamonix	Cross Country Skiing	Cross Country Skiing Men's 50 kilometres	nan
+... (48554 rows omitted)
+
+Ages of Athletes
+Some ages are entered as nan. nan is hard to work with as we saw in a previous lab. One way to think of this is nan is a very large number like infinity so if we use where to get ride of ages above any reasonable Olympic athletes age such as 99 we will remove the nan as below.
+
+age_athletes = athletes.where("Age",are.below(99)).where("Age",are.above(0))
+age_athletes
+ID	Name	Sex	Age	Height	Weight	Team	NOC	Games	Year	Season	City	Sport	Event	Medal
+16	Juhamatti Tapio Aaltonen	M	28	184	85	Finland	FIN	2014 Winter	2014	Winter	Sochi	Ice Hockey	Ice Hockey Men's Ice Hockey	Bronze
+126	Forough Abbasi	F	20	164	58	Iran	IRI	2014 Winter	2014	Winter	Sochi	Alpine Skiing	Alpine Skiing Women's Slalom	nan
+145	Jeremy Abbott	M	28	175	70	United States	USA	2014 Winter	2014	Winter	Sochi	Figure Skating	Figure Skating Men's Singles	nan
+145	Jeremy Abbott	M	28	175	70	United States	USA	2014 Winter	2014	Winter	Sochi	Figure Skating	Figure Skating Mixed Team	Bronze
+463	Agnese boltia	F	17	166	60	Latvia	LAT	2014 Winter	2014	Winter	Sochi	Alpine Skiing	Alpine Skiing Women's Super G	nan
+463	Agnese boltia	F	17	166	60	Latvia	LAT	2014 Winter	2014	Winter	Sochi	Alpine Skiing	Alpine Skiing Women's Giant Slalom	nan
+463	Agnese boltia	F	17	166	60	Latvia	LAT	2014 Winter	2014	Winter	Sochi	Alpine Skiing	Alpine Skiing Women's Slalom	nan
+532	Iason Abramashvili	M	25	176	82	Georgia	GEO	2014 Winter	2014	Winter	Sochi	Alpine Skiing	Alpine Skiing Men's Giant Slalom	nan
+532	Iason Abramashvili	M	25	176	82	Georgia	GEO	2014 Winter	2014	Winter	Sochi	Alpine Skiing	Alpine Skiing Men's Slalom	nan
+534	Oleksandr Volodymyrovych Abramenko	M	25	180	82	Ukraine	UKR	2014 Winter	2014	Winter	Sochi	Freestyle Skiing	Freestyle Skiing Men's Aerials	nan
+... (48269 rows omitted)
+
+2. Examine the distribution of the age of all Olympians with min, max, average, and plot with a histogram. To get the five number summary (min, max, median, mean, and standard deviation) using np.min, np.max, np.median, np.mean, and np.std respectively on the corresponding column array.
+age=athletes.select('Age').where("Age",are.below(99)).where("Age",are.above(0)).column("Age")
+age
+
+min_age= np.min(age)
+max_age= np.max(age)
+med_age= np.median(age)
+mean_age= np.mean(age)
+std_age= np.std(age)
+
+two = Table().with_columns(
+    "Minimum", min_age,
+    "Maximum", max_age,
+    "Median", med_age,
+    "Mean", mean_age,
+    "Standard Deviation", std_age)
+two
+print(two)
+
+athletes.hist("Age")
+Minimum | Maximum | Median | Mean    | Standard Deviation
+11      | 58      | 24     | 25.0391 | 4.77769
+
+3. Now examine the age distribution of only gold medal winners with both a five number summary, and with a histogram. Compare the distributions from question 2 and 3.
+The age distrubution amongst Olympians and specifically Gold Medalists are similar but not the same. The minimum of age amongst all Olympians is 11 years old while the minimum age for Gold Medalists is 13 years old. For the maximum age, it is 58 years old for all Olympians, but for gold medalists, it is 57. The median for gold medalists is 26 years old while for all Olympians, it is 24.
+age_medals = athletes.select("Age","Medal").where("Age",are.below(99)).where("Age",are.above(0)).where("Medal",are.equal_to("Gold")).where("Medal",are.not_equal_to("nan")).column("Age")
+age_medals
+
+goldd= athletes.group(["Age","Medal"]).where("Age",are.below(99)).where("Age",are.above(0)).where("Medal",are.equal_to("Gold")).where("Medal",are.not_equal_to("nan")).select("Age",'count')
+goldd
+
+gold_dist= goldd.select("Age")
+gold_dist
+
+goldhist= gold_dist.hist()
+
+minimum= np.min(age_medals)
+maximum= np.max(age_medals)
+median= np.median(age_medals)
+mean= np.mean(age_medals)
+std= np.std(age_medals)
+
+values = Table().with_columns(
+     "Minimum", minimum,
+     "Maximum", maximum,
+     "Median", median,
+     "Mean", mean,
+     "Standard Deviation", std)
+values
+Minimum	Maximum	Median	Mean	Standard Deviation
+13	57	26	26.157	4.88771
+
+4. What are the top ten countries in number of athletes?
+The top ten countries in the number of athletes are United States of America, Italy, Canada, Japan, Norway, France, Sweden, Switzerland, Austria, and Germany.
+top_ten= athletes.group(['Team','Medal']).sort('count',descending=True)
+top_ten
+print(top_ten)
+
+countries= athletes.group(['Team','Medal']).column('count')
+countries
+
+minimum_count= np.min(countries)
+maximum_count= np.max(countries)
+median_count= np.median(countries)
+mean_count= np.mean(countries)
+std_count= np.std(countries)
+
+value_country = Table().with_columns(
+     "Minimum", minimum_count,
+     "Maximum", maximum_count,
+     "Median", median_count,
+     "Mean", mean_count,
+     "Standard Deviation", std_count)
+value_country
+Team          | Medal | count
+United States | nan   | 2788
+Italy         | nan   | 2066
+Canada        | nan   | 2015
+Japan         | nan   | 1993
+Norway        | nan   | 1885
+France        | nan   | 1825
+Sweden        | nan   | 1803
+Switzerland   | nan   | 1728
+Austria       | nan   | 1710
+Germany       | nan   | 1651
+... (399 rows omitted)
+Minimum	Maximum	Median	Mean	Standard Deviation
+1	2788	14	118.738	341.504
+5. What are the top ten countries in number of Gold, silver, bronze medals, and total medals? You should have four sets of top ten countries for each of the scenarios.
+The top ten countries for number of Gold medals are Canada, Soviet Union, United States, Germany, Norway, Sweden, Russia, Austria, Finland, and South Korea.
+Top ten countries for number of Silver medals are United States, Canada, Norway, Finland, Germany, Sweden, Austria, Soviet Union, Russia, and Czechoslovakia.
+Top ten countries for number of Bronze medals are Finland, Sweden, United States, Switzerland, Norway, Canada, Austria, Germany, Soviet Union, and France.
+Top ten countries for number of total medals are United States, Canada, Norway, Soviet Union, Sweden, Finland, Germany, Austria, Switzerland , and Russia.
+gold_country = athletes.group(["NOC","Medal"]).where("Medal",are.equal_to("Gold")).where("Medal",are.not_equal_to("Nan")).sort('count',descending=True)
+gold_country
+print(gold_country)
+goldd= gold_country.column('count')
+
+minimum_goldd= np.min(goldd)
+maximum_goldd= np.max(goldd)
+median_goldd= np.median(goldd)
+mean_goldd= np.mean(goldd)
+std_goldd= np.std(goldd)
+
+value_gold_country = Table().with_columns(
+     "Minimum", minimum_goldd,
+     "Maximum", maximum_goldd,
+     "Median", median_goldd,
+     "Mean", mean_goldd,
+     "Standard Deviation", std_goldd)
+value_gold_country
+NOC  | Medal | count
+CAN  | Gold  | 305
+URS  | Gold  | 250
+USA  | Gold  | 166
+GER  | Gold  | 153
+NOR  | Gold  | 151
+SWE  | Gold  | 125
+RUS  | Gold  | 94
+AUT  | Gold  | 79
+SUI  | Gold  | 76
+FIN  | Gold  | 66
+... (28 rows omitted)
+Minimum	Maximum	Median	Mean	Standard Deviation
+1	305	16.5	50.3421	70.8446
+silver_count = athletes.group(["NOC","Medal"]).where("Medal",are.equal_to("Silver")).where("Medal",are.not_equal_to("Nan")).sort('count',descending=True)
+silver_count
+print(silver_count)
+silver= silver_count.column('count')
+
+minimum_silver= np.min(silver)
+maximum_silver= np.max(silver)
+median_silver= np.median(silver)
+mean_silver= np.mean(silver)
+std_silver= np.std(silver)
+
+value_silver_country = Table().with_columns(
+     "Minimum", minimum_silver,
+     "Maximum", maximum_silver,
+     "Median", median_silver,
+     "Mean", mean_silver,
+     "Standard Deviation", std_silver)
+value_silver_country
+NOC  | Medal  | count
+USA  | Silver | 308
+CAN  | Silver | 199
+NOR  | Silver | 165
+FIN  | Silver | 145
+GER  | Silver | 136
+SWE  | Silver | 126
+AUT  | Silver | 98
+URS  | Silver | 97
+RUS  | Silver | 89
+TCH  | Silver | 81
+... (31 rows omitted)
+Minimum	Maximum	Median	Mean	Standard Deviation
+1	308	10	46.2439	66.1623
+bronze_count = athletes.group(["NOC","Medal"]).where("Medal",are.equal_to("Bronze")).where("Medal",are.not_equal_to("Nan")).sort('count',descending=True)
+bronze_count
+print(bronze_count)
+bronze= bronze_count.column('count')
+
+minimum_bronze= np.min(bronze)
+maximum_bronze= np.max(bronze)
+median_bronze= np.median(bronze)
+mean_bronze= np.mean(bronze)
+std_bronze= np.std(bronze)
+
+value_bronze_country = Table().with_columns(
+     "Minimum", minimum_bronze,
+     "Maximum", maximum_bronze,
+     "Median", median_bronze,
+     "Mean", mean_bronze,
+     "Standard Deviation", std_bronze)
+value_bronze_country
+NOC  | Medal  | count
+FIN  | Bronze | 215
+SWE  | Bronze | 177
+USA  | Bronze | 161
+SUI  | Bronze | 129
+NOR  | Bronze | 127
+CAN  | Bronze | 107
+AUT  | Bronze | 103
+GER  | Bronze | 97
+URS  | Bronze | 93
+FRA  | Bronze | 79
+... (30 rows omitted)
+Minimum	Maximum	Median	Mean	Standard Deviation
+1	215	19	47.15	55.36
+total = athletes.pivot('Medal','NOC').drop("nan")
+
+bronze_total= total.column('Bronze')
+bronze_total
+
+silver_total= total.column('Silver')
+silver_total
+
+gold_total = total.column('Gold')
+gold_total
+
+add= bronze_total + silver_total + gold_total
+
+total_results= total.with_column(
+            "Total",add).sort("Total", descending= True)
+total_results
+print(total_results)
+total_country= total_results.column("Total")
+
+minimum_total= np.min(total_country)
+maximum_total= np.max(total_country)
+median_total= np.median(total_country)
+mean_total= np.mean(total_country)
+std_total= np.std(total_country)
+
+value_total_country = Table().with_columns(
+     "Minimum", minimum_total,
+     "Maximum", maximum_total,
+     "Median", median_total,
+     "Mean", mean_total,
+     "Standard Deviation", std_total)
+value_total_country
+NOC  | Bronze | Gold | Silver | Total
+USA  | 161    | 166  | 308    | 635
+CAN  | 107    | 305  | 199    | 611
+NOR  | 127    | 151  | 165    | 443
+URS  | 93     | 250  | 97     | 440
+SWE  | 177    | 125  | 126    | 428
+FIN  | 215    | 66   | 145    | 426
+GER  | 97     | 153  | 136    | 386
+AUT  | 103    | 79   | 98     | 280
+SUI  | 129    | 76   | 70     | 275
+RUS  | 77     | 94   | 89     | 260
+... (109 rows omitted)
+Minimum	Maximum	Median	Mean	Standard Deviation
+0	635	0	47.8571	122.888
+6. What are the top 5 sports in terms of number of athletes?
+The top 5 sports are Cross Country Skiing, alpine skiing, Speed Skating, Ice Hockey, and Biathalon.
+sports= athletes.group('Sport')
+sports
+top_five= sports.sort('count',descending= True).take(np.arange(5))
+top_five
+Sport	count
+Cross Country Skiing	9133
+Alpine Skiing	8829
+Speed Skating	5613
+Ice Hockey	5456
+Biathlon	4893
+7. Which sports (top 5) have awarded the most medals?
+Cross Country Skiing and Ice Hockey.
+sports_medal= athletes.group(['Sport','Medal']).where("Medal",are.not_equal_to("nan"))
+sports_medal
+most_medals= sports_medal.sort('count',descending= True)
+most_medals
+Sport	Medal	count
+Ice Hockey	Silver	504
+Ice Hockey	Gold	500
+Ice Hockey	Bronze	499
+Cross Country Skiing	Bronze	263
+Cross Country Skiing	Silver	257
+Cross Country Skiing	Gold	256
+Speed Skating	Silver	197
+Speed Skating	Gold	193
+Speed Skating	Bronze	190
+Alpine Skiing	Silver	144
+... (39 rows omitted)
+
+8. Which sports (top 5) awarded the most medals in Lake Placid, New York (1980,
+https://www.lakeplacid.com/do/activities/olympic-sites ).
+
+The Top 5 sports that are awarded the most medals in Lake Placid, New York in 1980 are Ice Hockey, Cross Country Skiing, Speed Skating, Alpine Skiing, and Biathlon
+lake_placid= athletes.select('Sport','City','Year','Medal').where('Year',are.equal_to(1980)).where('City',are.equal_to("Lake Placid")).where('Medal',are.not_equal_to("nan")).sort('Year',descending=True)
+lake_placid
+sport= lake_placid.group(['Sport','Year']).sort('count',descending=True)
+sport
+Sport	Year	count
+Ice Hockey	1980	59
+Cross Country Skiing	1980	38
+Speed Skating	1980	28
+Alpine Skiing	1980	18
+Biathlon	1980	18
+Bobsleigh	1980	18
+Figure Skating	1980	18
+Luge	1980	12
+Ski Jumping	1980	6
+Nordic Combined	1980	3
+9. Remember medals are awarded to each participant on a team, how does this effect the results you found above?
+This effects the result because Ice Hockey is a team sport. This could affect the number of medals distributed, which could not provide accurate number of medals awarded for each sport. This is why there were many repeats for question 7, since other sports are individually played and not on a team.
+Stage 2: Time trends and comparative results
+1. Plot the trend in number of athletes per year.
+number_of_athletes=  athletes.group("Year").plot("Year","count")
+number_of_athletes
+
+2. Plot the number of medals per year.
+number_of_medals= athletes.group(["Medal","Year"]).where("Medal",are.not_equal_to("nan"))
+number_of_medals
+medals_per_year= number_of_medals.plot("Year","count")
+medals_per_year
+
+3. Plot the number of gold medals per year excluding “Ice Hockey”, why hockey?
+We exclude Ice Hockey because there weren't many gold medals for Ice Hockey, which could affect the trend.
+number_of_gold= athletes.select("Sport","Medal","Year").where("Medal",are.equal_to("Gold")).where("Medal",are.not_equal_to("nan")).where("Sport",are.not_equal_to("Ice Hockey"))
+number_of_gold
+
+gold_per_year= number_of_gold.group(["Medal","Year"])
+gold_per_year
+
+graph_gold= gold_per_year.plot("Year",'count')
+
+4. Plot an overlay of gold, silver, and bronze medals as a function of year on the same plot excluding hockey.
+medal_sport = athletes.select("Sport","Medal","Year").where("Medal",are.not_equal_to("nan")).where("Sport",are.not_equal_to("Ice Hockey"))
+medal_sport
+
+number_of_gold= medal_sport.where("Medal",are.equal_to("Gold")).group(['Medal','Year'])
+number_of_gold
+
+gold_column= number_of_gold.column('count')
+gold_column
+
+number_of_silver= medal_sport.where("Medal",are.equal_to("Silver")).group(['Medal','Year'])
+number_of_silver
+
+silver_column= number_of_silver.column('count')
+silver_column
+
+number_of_bronze= medal_sport.where("Medal",are.equal_to("Bronze")).group(['Medal','Year'])
+number_of_bronze
+
+bronze_column= number_of_bronze.column('count')
+bronze_column
+
+Year_numbers= medal_sport.column("Year")
+Year_numbers
+
+table_medals= Table().with_columns(
+    "Gold", gold_column,
+    "Silver", silver_column,
+    "Bronze", bronze_column,)
+table_medals
+
+plot= table_medals.plot()
+
+medal_sport = athletes.where("Medal",are.not_equal_to("nan")).where("Sport",are.not_equal_to("Ice Hockey")).pivot("Medal", "Year").plot("Year")
+medal_sport
+
+5. Compare the US and Norway medal counts as a function of year by overlaying their counts.
+US = athletes.where("Medal",are.not_equal_to("nan")).where('NOC', are.equal_to ("USA"))
+US
+ID	Name	Sex	Age	Height	Weight	Team	NOC	Games	Year	Season	City	Sport	Event	Medal
+145	Jeremy Abbott	M	28	175	70	United States	USA	2014 Winter	2014	Winter	Sochi	Figure Skating	Figure Skating Mixed Team	Bronze
+3150	Eduardo C. "Eddy" Alvarez	M	24	175	72	United States	USA	2014 Winter	2014	Winter	Sochi	Short Track Speed Skating	Short Track Speed Skating Men's 5,000 metres Relay	Silver
+3823	Jamie Louise Anderson	F	23	160	54	United States	USA	2014 Winter	2014	Winter	Sochi	Snowboarding	Snowboarding Women's Slopestyle	Gold
+4538	Matthew "Matt" Antoine	M	28	190	84	United States	USA	2014 Winter	2014	Winter	Sochi	Skeleton	Skeleton Men's Skeleton	Bronze
+9669	Kacey Lee Bellamy	F	26	170	66	United States	USA	2014 Winter	2014	Winter	Sochi	Ice Hockey	Ice Hockey Women's Ice Hockey	Silver
+14276	Maddison Michelle "Maddie" Bowman	F	20	155	63	United States	USA	2014 Winter	2014	Winter	Sochi	Freestyle Skiing	Freestyle Skiing Women's Halfpipe	Gold
+14394	Megan Bozek	F	22	173	77	United States	USA	2014 Winter	2014	Winter	Sochi	Ice Hockey	Ice Hockey Women's Ice Hockey	Silver
+15537	Jason Brown	M	19	170	61	United States	USA	2014 Winter	2014	Winter	Sochi	Figure Skating	Figure Skating Mixed Team	Bronze
+18446	Alexandra "Alex" Carpenter	F	19	170	70	United States	USA	2014 Winter	2014	Winter	Sochi	Ice Hockey	Ice Hockey Women's Ice Hockey	Silver
+18913	Marissa Castelli	F	23	152	48	United States	USA	2014 Winter	2014	Winter	Sochi	Figure Skating	Figure Skating Mixed Team	Bronze
+... (625 rows omitted)
+
+Norway = athletes.where("Medal",are.not_equal_to("nan")).where('NOC', are.equal_to ("NOR"))
+Norway
+ID	Name	Sex	Age	Height	Weight	Team	NOC	Games	Year	Season	City	Sport	Event	Medal
+7811	Anders Bardal	M	31	186	60	Norway	NOR	2014 Winter	2014	Winter	Sochi	Ski Jumping	Ski Jumping Men's Normal Hill, Individual	Bronze
+10467	Tora Berger (-Tveldal)	F	32	166	56	Norway	NOR	2014 Winter	2014	Winter	Sochi	Biathlon	Biathlon Mixed 2 x 6 kilometres and 2 x 7.5 kilometres Relay	Gold
+10467	Tora Berger (-Tveldal)	F	32	166	56	Norway	NOR	2014 Winter	2014	Winter	Sochi	Biathlon	Biathlon Women's 10 kilometres Pursuit	Silver
+10467	Tora Berger (-Tveldal)	F	32	166	56	Norway	NOR	2014 Winter	2014	Winter	Sochi	Biathlon	Biathlon Women's 4 x 6 kilometres Relay	Bronze
+11943	Marit Bjrgen	F	33	168	64	Norway	NOR	2014 Winter	2014	Winter	Sochi	Cross Country Skiing	Cross Country Skiing Women's 30 kilometres	Gold
+11943	Marit Bjrgen	F	33	168	64	Norway	NOR	2014 Winter	2014	Winter	Sochi	Cross Country Skiing	Cross Country Skiing Women's 15 km Skiathlon	Gold
+11943	Marit Bjrgen	F	33	168	64	Norway	NOR	2014 Winter	2014	Winter	Sochi	Cross Country Skiing	Cross Country Skiing Women's Team Sprint	Gold
+11951	Ole Einar Bjrndalen	M	40	178	65	Norway	NOR	2014 Winter	2014	Winter	Sochi	Biathlon	Biathlon Men's 10 kilometres Sprint	Gold
+11951	Ole Einar Bjrndalen	M	40	178	65	Norway	NOR	2014 Winter	2014	Winter	Sochi	Biathlon	Biathlon Mixed 2 x 6 kilometres and 2 x 7.5 kilometres Relay	Gold
+31342	Tiril Kampenhaug Eckhoff	F	23	163	59	Norway	NOR	2014 Winter	2014	Winter	Sochi	Biathlon	Biathlon Mixed 2 x 6 kilometres and 2 x 7.5 kilometres Relay	Gold
+... (433 rows omitted)
+
+NORUSA= US.append(Norway)
+NORUSA.where("Medal",are.not_equal_to("nan")).pivot("NOC","Year").plot("Year")
+
+6. Now use a scatter plot (.scatter() ) to look at the number of athletes per year for the US versus that for Norway. What trends do you see?
+The trends that are present is that USA is exponentially growing and appears to be a positive trend, while Norway is slowly growing.
+NORUSA.where("Medal",are.not_equal_to("nan")).pivot("NOC","Year").scatter("Year")
+
+7. Use a scatter to plot the number of athletes for each country versus the number of medals.
+athletes_NORUSA = NORUSA.with_columns("Medal num",NORUSA.column("Medal")!="nan","Athlete Number",1)
+athletes_NORUSA
+ID	Name	Sex	Age	Height	Weight	Team	NOC	Games	Year	Season	City	Sport	Event	Medal	Medal num	Athlete Number
+145	Jeremy Abbott	M	28	175	70	United States	USA	2014 Winter	2014	Winter	Sochi	Figure Skating	Figure Skating Mixed Team	Bronze	True	1
+3150	Eduardo C. "Eddy" Alvarez	M	24	175	72	United States	USA	2014 Winter	2014	Winter	Sochi	Short Track Speed Skating	Short Track Speed Skating Men's 5,000 metres Relay	Silver	True	1
+3823	Jamie Louise Anderson	F	23	160	54	United States	USA	2014 Winter	2014	Winter	Sochi	Snowboarding	Snowboarding Women's Slopestyle	Gold	True	1
+4538	Matthew "Matt" Antoine	M	28	190	84	United States	USA	2014 Winter	2014	Winter	Sochi	Skeleton	Skeleton Men's Skeleton	Bronze	True	1
+9669	Kacey Lee Bellamy	F	26	170	66	United States	USA	2014 Winter	2014	Winter	Sochi	Ice Hockey	Ice Hockey Women's Ice Hockey	Silver	True	1
+14276	Maddison Michelle "Maddie" Bowman	F	20	155	63	United States	USA	2014 Winter	2014	Winter	Sochi	Freestyle Skiing	Freestyle Skiing Women's Halfpipe	Gold	True	1
+14394	Megan Bozek	F	22	173	77	United States	USA	2014 Winter	2014	Winter	Sochi	Ice Hockey	Ice Hockey Women's Ice Hockey	Silver	True	1
+15537	Jason Brown	M	19	170	61	United States	USA	2014 Winter	2014	Winter	Sochi	Figure Skating	Figure Skating Mixed Team	Bronze	True	1
+18446	Alexandra "Alex" Carpenter	F	19	170	70	United States	USA	2014 Winter	2014	Winter	Sochi	Ice Hockey	Ice Hockey Women's Ice Hockey	Silver	True	1
+18913	Marissa Castelli	F	23	152	48	United States	USA	2014 Winter	2014	Winter	Sochi	Figure Skating	Figure Skating Mixed Team	Bronze	True	1
+... (1068 rows omitted)
+
+USA_medals = athletes_NORUSA.where("Team",are.equal_to("United States")).pivot("Medal num","Year").column("True")
+NOR_medals = athletes_NORUSA.where("Team",are.equal_to("Norway")).pivot("Medal num","Year").column("True")
+USA_athletes = athletes_NORUSA.where("Team",are.equal_to("United States")).group("Year").column('count')
+NOR_athletes = athletes_NORUSA.where("Team",are.equal_to("Norway")).group("Year").column('count')
+
+Scatterplot= athletes_NORUSA.sort("Year").group("Year").column("Year")
+Num_athletes_vs_medals= Table().with_columns(
+    "Year", Scatterplot,
+    "Medal Count: USA", USA_medals,
+    "Athlete Count: USA", USA_athletes,
+    "Medal Count: NOR", NOR_medals,
+    "Athlete Count: NOR", NOR_athletes)
+Num_athletes_vs_medals
+Year	Medal Count: USA	Athlete Count: USA	Medal Count: NOR	Athlete Count: NOR
+1924	12	12	17	17
+1928	4	4	15	15
+1932	20	20	10	10
+1936	12	12	18	18
+1948	6	6	13	13
+1952	22	22	19	19
+1956	22	22	4	4
+1960	25	25	9	9
+1964	6	6	15	15
+1968	7	7	22	22
+... (12 rows omitted)
+
+Num_athletes_vs_medals.select("Year", "Medal Count: USA", "Athlete Count: USA", "Medal Count: NOR", "Athlete Count: NOR").scatter("Year")
